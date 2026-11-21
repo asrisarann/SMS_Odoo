@@ -43,9 +43,10 @@
 ## 9. Expanded Navbar Width & Button Fitting Optimization
 - Implemented: Expanded navbar container layout to `max-width: 1560px` with optimized container horizontal padding (`24px`), dynamic flex distribution across logo, center nav buttons, and right action buttons, and enforced `white-space: nowrap` on buttons so that "Join The Club", "Login", and all navigation buttons fit cleanly on a single line with generous spacing and zero wrapping.
 - Used: CSS Flexbox dynamic layout, `navbar-hero-container`.
-- Verification: ESLint passed with 0 errors/warnings, `vite build` completed in 335ms, and root workspace build passed cleanly.
-
-
-
-
-
+- Verification: ESLint passed with 0 errors/warnings, `vite build` completed in 335ms, and root workspace build passed cleanly.## 10. Automated Membership Expiry Email Reminder System
+- Implemented: Automated background reminder service that scans user memberships nearing expiration (e.g. 2 days or less remaining until `renewalDate`) and automatically queues and dispatches personalized email notifications. Designed simply and clearly with BullMQ and ioredis when Redis is available, backed by an in-memory queue processor when Redis is offline. Includes 24-hour deduplication tracking via `User.lastReminderSent` timestamp in Neon Postgres, email template rendering (membership tier, days remaining, formatted expiration date, renewal CTA), background recurring worker (runs hourly with startup check), and REST API endpoints (`GET /api/membership/expiring`, `POST /api/membership/trigger-expiry-check`).
+- Used: Node.js, Express.js, Prisma ORM (v7), `bullmq`, `ioredis`, `nodemailer`, and PostgreSQL (Neon).
+- Verification: 6 live integration tests executed in `server/test-membership-expiry.js` verifying accurate days calculation, expiring user detection, exclusion of far-future and recently notified users, BullMQ/in-memory queue execution, `lastReminderSent` database update, deduplication protection, and role-protected API endpoints; existing super admin tests passed (9/9); root `npm run build` passed cleanly.## 10. Automated Membership Expiry Email Reminder System
+- Implemented: Automated background reminder service that scans user memberships nearing expiration (e.g. 2 days or less remaining until `renewalDate`) and automatically queues and dispatches personalized email notifications. Designed simply and clearly with BullMQ and ioredis when Redis is available, backed by an in-memory queue processor when Redis is offline. Includes 24-hour deduplication tracking via `User.lastReminderSent` timestamp in Neon Postgres, email template rendering (membership tier, days remaining, formatted expiration date, renewal CTA), background recurring worker (runs hourly with startup check), and REST API endpoints (`GET /api/membership/expiring`, `POST /api/membership/trigger-expiry-check`).
+- Used: Node.js, Express.js, Prisma ORM (v7), `bullmq`, `ioredis`, `nodemailer`, and PostgreSQL (Neon).
+- Verification: 6 live integration tests executed in `server/test-membership-expiry.js` verifying accurate days calculation, expiring user detection, exclusion of far-future and recently notified users, BullMQ/in-memory queue execution, `lastReminderSent` database update, deduplication protection, and role-protected API endpoints; existing super admin tests passed (9/9); root `npm run build` passed cleanly.

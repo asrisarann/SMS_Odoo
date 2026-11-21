@@ -38,6 +38,7 @@ model User {
   email          String              @unique
   membership     Membership
   renewalDate    DateTime?
+  lastReminderSent DateTime?
   pastMembership Membership[]
   lastEntry      DateTime?
   amount         Decimal             @default(0) @db.Decimal(10, 2)

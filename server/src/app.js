@@ -9,6 +9,7 @@ import sportsRoutes from "./modules/sports/routes/sports.route.js";
 import bookingRoutes from "./modules/sports/routes/booking.route.js";
 import adminSportsRoutes from "./modules/sports/routes/admin.route.js";
 import { superAdminRoutes } from "./modules/superAdmin/index.js";
+import { membershipRoutes } from "./modules/membership/index.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -63,6 +64,9 @@ app.use("/api/admin/sports", adminSportsRoutes);
 // Super Admin General Management Routes (Access to all database models across modules)
 app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/admin", superAdminRoutes);
+
+// Membership Routes (Expiry checking and reminders)
+app.use("/api/membership", membershipRoutes);
 
 // Protected module routes demonstrating role & module-based access
 // Sub-admin of 'staff' can access /api/modules/staff, Admin can access all modules
