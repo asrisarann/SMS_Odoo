@@ -22,6 +22,11 @@ enum CourtType {
   PADEL_COURT
 }
 
+enum CallType {
+  INCOMING
+  OUTGOING
+}
+
 enum BookingStatus {
   HELD
   CONFIRMED
@@ -143,12 +148,39 @@ model Product {
 // ---------------- STAFF ----------------
 
 model Staff {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
-  email       String   @unique
+  email       String          @unique
   phone       String
   role        String
   designation String?
-  salary      Decimal  @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
+  salary      Decimal         @db.Decimal(10, 2)
+  createdAt   DateTime        @default(now())
+  schedules   StaffSchedule[]
+}
+
+// ---------------- STAFF SCHEDULE ----------------
+
+model StaffSchedule {
+  id         String   @id @default(uuid())
+  staffId    String
+  shiftStart DateTime
+  shiftEnd   DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  staff      Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+// ---------------- CALL LOG ----------------
+
+model CallLog {
+  id         String   @id @default(uuid())
+  callerName String
+  phone      String
+  callType   CallType
+  purpose    String
+  notes      String?
+  callTime   DateTime @default(now())
+  createdAt  DateTime @default(now())
 }

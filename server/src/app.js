@@ -10,6 +10,7 @@ import bookingRoutes from "./modules/sports/routes/booking.route.js";
 import adminSportsRoutes from "./modules/sports/routes/admin.route.js";
 import { superAdminRoutes } from "./modules/superAdmin/index.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
+import frontDeskRouter from "./modules/front-desk/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,8 +53,9 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Authentication Routes
+// Auth routes (accessible via /api/auth or /auth)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
 
 // Sports & Court Booking Routes
 app.use("/api/sports", sportsRoutes);
@@ -80,5 +82,10 @@ app.get("/api/modules/sports", authenticate, authorizeModule("sports"), (req, re
     user: req.user,
   });
 });
+
+// Front Desk module routes
+app.use("/api/front-desk", frontDeskRouter);
+app.use("/api", frontDeskRouter);
+app.use(frontDeskRouter);
 
 export default app;
