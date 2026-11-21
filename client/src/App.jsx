@@ -1,122 +1,87 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import Navbar from './components/layout/Navbar';
+import Sidebar from './components/layout/Sidebar';
+import Footer from './components/layout/Footer';
+import VideoModal from './components/layout/VideoModal';
+import ScrollProgress from './components/common/ScrollProgress';
+import BackToTop from './components/common/BackToTop';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Pages
+import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
+import BookingPage from './pages/BookingPage';
+import MembershipPage from './pages/MembershipPage';
+import ServicePage from './pages/ServicePage';
+import EventPage from './pages/EventPage';
+import CoachingPage from './pages/CoachingPage';
+import CommunityPage from './pages/CommunityPage';
+import FAQPage from './pages/FAQPage';
+import BlogPage from './pages/BlogPage';
+import ContactPage from './pages/ContactPage';
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
 }
 
-export default App
+export default function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+
+  const handleOpenVideo = (url) => {
+    setVideoUrl(url || 'https://www.youtube.com/embed/VhBl3dHT5SY');
+    setVideoOpen(true);
+  };
+
+  const handleCloseVideo = () => {
+    setVideoOpen(false);
+    setVideoUrl('');
+  };
+
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <ScrollProgress />
+      <div className="adelux-app min-h-screen d-flex flex-column">
+        {/* Navigation Bar */}
+        <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
+
+        {/* Mobile Sidebar Navigation Drawer */}
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {/* Main Content Pages */}
+        <div className="flex-grow-1">
+          <Routes>
+            <Route path="/" element={<HomePage onOpenVideo={handleOpenVideo} />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/booking" element={<BookingPage />} />
+            <Route path="/membership" element={<MembershipPage />} />
+            <Route path="/service" element={<ServicePage />} />
+            <Route path="/event" element={<EventPage />} />
+            <Route path="/coaching" element={<CoachingPage />} />
+            <Route path="/community" element={<CommunityPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            {/* Fallback to Home */}
+            <Route path="*" element={<HomePage onOpenVideo={handleOpenVideo} />} />
+          </Routes>
+        </div>
+
+        {/* Footer */}
+        <Footer />
+
+        {/* Floating Back to Top Button */}
+        <BackToTop />
+
+        {/* Global Video Modal */}
+        <VideoModal isOpen={videoOpen} videoUrl={videoUrl} onClose={handleCloseVideo} />
+      </div>
+    </BrowserRouter>
+  );
+}
