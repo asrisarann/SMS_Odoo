@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import prisma from "./config/prisma.js";
+import sportsShopRouter from "./modules/sportsShop/sportsShop.routes.js";
 import authRoutes from "./common/auth/auth.route.js";
 import sportsRoutes from "./modules/sports/routes/sports.route.js";
 import bookingRoutes from "./modules/sports/routes/booking.route.js";
@@ -27,6 +28,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/api/shop", sportsShopRouter);
 // Serve Interactive HTML API Documentation
 app.get(["/api/docs", "/docs"], (req, res) => {
   res.sendFile(path.resolve(__dirname, "../../api-docs.html"));

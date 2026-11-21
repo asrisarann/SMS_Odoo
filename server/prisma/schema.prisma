@@ -133,27 +133,47 @@ model CafeMenuItem {
 // ---------------- SPORT SHOP PURCHASE ----------------
 
 model SportShopPurchase {
-  id           String   @id @default(uuid())
-  userID       String
-  name         String
-  phone        String
-  items        String[]
-  purchaseDate DateTime @default(now())
-  totalAmount  Decimal  @db.Decimal(10, 2)
+  id              String               @id @default(uuid())
+  userID          String
+  name            String
+  phone           String
+  items           String[]
+  status          String               @default("PENDING")
+  fulfillmentType String               @default("PICKUP")
+  discount        Decimal              @default(0) @db.Decimal(10, 2)
+  purchaseDate    DateTime             @default(now())
+  totalAmount     Decimal              @db.Decimal(10, 2)
 
-  user         User     @relation(fields: [userID], references: [id])
+  user            User                 @relation(fields: [userID], references: [id])
+  orderItems      SportShopOrderItem[]
+}
+
+// ---------------- SPORT SHOP ORDER ITEM ----------------
+
+model SportShopOrderItem {
+  id         String            @id @default(uuid())
+  purchaseID String
+  productID  String
+  quantity   Int               @default(1)
+  unitPrice  Decimal           @db.Decimal(10, 2)
+  totalPrice Decimal           @db.Decimal(10, 2)
+
+  purchase   SportShopPurchase @relation(fields: [purchaseID], references: [id], onDelete: Cascade)
+  product    Product           @relation(fields: [productID], references: [id])
 }
 
 // ---------------- PRODUCT / STOCK ----------------
 
 model Product {
-  id        String   @id @default(uuid())
-  name      String
-  category  String
-  buyPrice  Decimal  @db.Decimal(10, 2)
-  rentPrice Decimal? @db.Decimal(10, 2)
-  size      String?
-  inStock   Int      @default(0)
+  id         String               @id @default(uuid())
+  name       String
+  category   String
+  buyPrice   Decimal              @db.Decimal(10, 2)
+  rentPrice  Decimal?             @db.Decimal(10, 2)
+  size       String?
+  inStock    Int                  @default(0)
+
+  orderItems SportShopOrderItem[]
 }
 
 // ---------------- STAFF ----------------
