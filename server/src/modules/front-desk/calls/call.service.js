@@ -118,3 +118,65 @@ export const getCallLogById = async (id) => {
     where: { id },
   });
 };
+
+/**
+ * Retrieves daily calls (both incoming and outgoing) within a date range for activity reporting.
+ *
+ * @param {Date} startOfDay
+ * @param {Date} endOfDay
+ * @returns {Promise<{incomingCalls: Array, outgoingCalls: Array}>}
+ */
+export const getDailyCalls = async (startOfDay, endOfDay) => {
+  const [incomingCalls, outgoingCalls] = await Promise.all([
+    // Incoming calls
+    prisma.callLog.findMany({
+      where: {
+        callType: "INCOMING",
+        callTime: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      select: {
+        id: true,
+        callerName: true,
+        phone: true,
+        callType: true,
+        purpose: true,
+        notes: true,
+        callTime: true,
+      },
+      orderBy: {
+        callTime: "desc",
+      },
+    }),
+
+    // Outgoing calls
+    prisma.callLog.findMany({
+      where: {
+        callType: "OUTGOING",
+        callTime: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      select: {
+        id: true,
+        callerName: true,
+        phone: true,
+        callType: true,
+        purpose: true,
+        notes: true,
+        callTime: true,
+      },
+      orderBy: {
+        callTime: "desc",
+      },
+    }),
+  ]);
+
+  return {
+    incomingCalls,
+    outgoingCalls,
+  };
+};

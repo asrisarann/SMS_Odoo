@@ -20,6 +20,7 @@ import FAQPage from './pages/FAQPage';
 import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
 import AuthPage from './pages/AuthPage';
+import FrontDeskPage from './pages/FrontDeskPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -69,6 +70,8 @@ export default function App() {
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/front-desk" element={<FrontDeskPage />} />
+            <Route path="/frontdesk" element={<FrontDeskPage />} />
             <Route path="/login" element={<AuthPage initialMode="login" />} />
             <Route path="/register" element={<AuthPage initialMode="register" />} />
             {/* Fallback to Home */}

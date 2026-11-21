@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageBanner from '../components/common/PageBanner';
 import ScrollReveal from '../components/common/ScrollReveal';
+import api from '../services/api';
 
 export default function AuthPage({ initialMode = 'login' }) {
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
@@ -27,24 +28,35 @@ export default function AuthPage({ initialMode = 'login' }) {
     level: 'Intermediate',
   });
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setStatusMessage(null);
 
-    setTimeout(() => {
+    try {
+      const res = await api.auth.login({
+        email: loginForm.email,
+        password: loginForm.password,
+      });
+
       setLoading(false);
       setStatusMessage({
         type: 'success',
-        text: 'Login successful! Welcome back to Adelux Padel Club.',
+        text: res.message || 'Login successful! Welcome back to Adelux Padel Club.',
       });
       setTimeout(() => {
-        navigate('/booking');
-      }, 1200);
-    }, 700);
+        navigate('/front-desk');
+      }, 1000);
+    } catch (err) {
+      setLoading(false);
+      setStatusMessage({
+        type: 'error',
+        text: err.message || 'Login failed. Please verify your email and password.',
+      });
+    }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setStatusMessage(null);
@@ -58,16 +70,29 @@ export default function AuthPage({ initialMode = 'login' }) {
       return;
     }
 
-    setTimeout(() => {
+    try {
+      const res = await api.auth.register({
+        name: registerForm.name,
+        email: registerForm.email,
+        phone: registerForm.phone,
+        password: registerForm.password,
+      });
+
       setLoading(false);
       setStatusMessage({
         type: 'success',
-        text: 'Account created successfully! Welcome to the Adelux community.',
+        text: res.message || 'Account created successfully! Welcome to the Adelux community.',
       });
       setTimeout(() => {
-        navigate('/booking');
-      }, 1200);
-    }, 800);
+        navigate('/front-desk');
+      }, 1000);
+    } catch (err) {
+      setLoading(false);
+      setStatusMessage({
+        type: 'error',
+        text: err.message || (err.errors && err.errors[0]) || 'Registration failed. Please try again.',
+      });
+    }
   };
 
   return (

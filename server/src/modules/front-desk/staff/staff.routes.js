@@ -4,11 +4,12 @@ import scheduleRouter from "./schedule/schedule.routes.js";
 
 const router = Router();
 
-// GET /daily-activities - Retrieve today's check-ins, incoming calls, and outgoing calls
-router.get("/daily-activities", staffController.getDailyActivities);
-
 // Staff Schedule routes - Mounted under /schedules and /schedule
 router.use("/schedules", scheduleRouter);
 router.use("/schedule", scheduleRouter);
+
+// Staff member list & details
+router.get("/:id", staffController.getStaffById);
+router.get("/", staffController.getAllStaff);
 
 export default router;

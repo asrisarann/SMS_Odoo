@@ -51,6 +51,12 @@ export default function Navbar({ onOpenSidebar }) {
                     Contact Us
                   </Link>
                   <Link
+                    to="/front-desk"
+                    className={`nav-link-btn ${isActive('/front-desk') ? 'active' : ''}`}
+                  >
+                    Front Desk
+                  </Link>
+                  <Link
                     to="/login"
                     className={`nav-link-btn ${isActive('/login') || isActive('/register') ? 'active' : ''}`}
                   >
