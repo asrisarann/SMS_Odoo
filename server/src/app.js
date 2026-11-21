@@ -3,6 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import prisma from "./config/prisma.js";
 import authRoutes from "./common/auth/auth.route.js";
+import sportsRoutes from "./modules/sports/routes/sports.route.js";
+import bookingRoutes from "./modules/sports/routes/booking.route.js";
+import adminSportsRoutes from "./modules/sports/routes/admin.route.js";
+import { superAdminRoutes } from "./modules/superAdmin/index.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
 
 const app = express();
@@ -41,7 +45,16 @@ app.get("/api/health", async (req, res) => {
 // Authentication Routes
 app.use("/api/auth", authRoutes);
 
-// Example protected module routes demonstrating role & module-based access
+// Sports & Court Booking Routes
+app.use("/api/sports", sportsRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/admin/sports", adminSportsRoutes);
+
+// Super Admin General Management Routes (Access to all database models across modules)
+app.use("/api/super-admin", superAdminRoutes);
+app.use("/api/admin", superAdminRoutes);
+
+// Protected module routes demonstrating role & module-based access
 // Sub-admin of 'staff' can access /api/modules/staff, Admin can access all modules
 app.get("/api/modules/staff", authenticate, authorizeModule("staff"), (req, res) => {
   res.json({
