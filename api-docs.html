@@ -1,0 +1,2857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS Odoo - Backend API Documentation & Testing Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-sidebar: #0f172a;
+      --bg-card: #131d31;
+      --bg-code: #070b13;
+      --border-color: #1e293b;
+      --border-focus: #3b82f6;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --color-get: #38bdf8;
+      --bg-get: rgba(56, 189, 248, 0.12);
+      --border-get: rgba(56, 189, 248, 0.3);
+      
+      --color-post: #34d399;
+      --bg-post: rgba(52, 211, 153, 0.12);
+      --border-post: rgba(52, 211, 153, 0.3);
+      
+      --color-put: #fbbf24;
+      --bg-put: rgba(251, 191, 36, 0.12);
+      --border-put: rgba(251, 191, 36, 0.3);
+      
+      --color-delete: #f87171;
+      --bg-delete: rgba(248, 113, 113, 0.12);
+      --border-delete: rgba(248, 113, 113, 0.3);
+      
+      --badge-admin: #ec4899;
+      --badge-subadmin: #a855f7;
+      --badge-member: #3b82f6;
+      --badge-public: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* Sidebar Navigation */
+    aside {
+      width: 320px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .brand-badge {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-search {
+      margin-top: 14px;
+      position: relative;
+    }
+
+    .sidebar-search input {
+      width: 100%;
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 9px 12px 9px 34px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .sidebar-search input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .sidebar-search svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--text-dim);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px 30px;
+    }
+
+    .nav-group-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      padding: 12px 8px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+    }
+
+    .nav-item.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    .method-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      min-width: 44px;
+      text-align: center;
+      display: inline-block;
+    }
+
+    .tag-get { color: var(--color-get); background: var(--bg-get); }
+    .tag-post { color: var(--color-post); background: var(--bg-post); }
+    .tag-put { color: var(--color-put); background: var(--bg-put); }
+    .tag-delete { color: var(--color-delete); background: var(--bg-delete); }
+    .tag-ws { color: #c084fc; background: rgba(192, 132, 252, 0.12); }
+
+    /* Main Content Area */
+    main {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 32px 48px 100px;
+      position: relative;
+    }
+
+    /* Top Control Bar */
+    .top-controls {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px 24px;
+      margin-bottom: 36px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+    }
+
+    .top-controls-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .top-controls-header h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .live-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #10b981;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .live-status-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .control-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr auto;
+      gap: 16px;
+      align-items: flex-end;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .btn-test-ping {
+      padding: 9px 16px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-test-ping:hover {
+      background: #1d4ed8;
+    }
+
+    /* Section Headers */
+    .api-section {
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-description {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* Endpoint Card */
+    .endpoint-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .endpoint-card:hover {
+      border-color: #334155;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .endpoint-header {
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.7);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .endpoint-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .endpoint-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .endpoint-summary {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    .endpoint-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .role-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.04em;
+    }
+
+    .role-public { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .role-member { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .role-subadmin { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .role-admin { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+
+    .endpoint-body {
+      padding: 24px;
+    }
+
+    .endpoint-description {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* Grid for Parameters & Payload */
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Tables */
+    .table-container {
+      margin-bottom: 18px;
+    }
+
+    .table-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: #090d16;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    th {
+      background: #0f172a;
+      text-align: left;
+      padding: 9px 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #141f33;
+      color: var(--text-muted);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td code {
+      font-family: 'JetBrains Mono', monospace;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+    }
+
+    .param-required {
+      color: #f87171;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .param-optional {
+      color: var(--text-dim);
+      font-size: 0.72rem;
+    }
+
+    /* Code Blocks */
+    .code-panel {
+      background: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .code-panel-header {
+      background: #0d131f;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .code-panel-title {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .code-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-action {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+
+    .btn-action:hover {
+      background: #334155;
+      color: #fff;
+    }
+
+    .btn-action.copied {
+      background: #059669;
+      color: #fff;
+      border-color: #10b981;
+    }
+
+    pre {
+      padding: 14px;
+      margin: 0;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+
+    /* JSON Syntax Coloring (Simple CSS) */
+    .json-key { color: #38bdf8; }
+    .json-string { color: #a5d6a7; }
+    .json-number { color: #fbbf24; }
+    .json-bool { color: #f472b6; }
+    .json-null { color: #94a3b8; }
+
+    /* Try It Out Banner inside endpoint */
+    .endpoint-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn-try {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-try:hover {
+      opacity: 0.9;
+    }
+
+    /* Interactive Live Tester Drawer / Modal */
+    #testerModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #testerModal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 850px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #374151;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1f2937;
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 1.3rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .tester-url-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tester-method {
+      padding: 8px 12px;
+      background: #374151;
+      color: #fff;
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .tester-url {
+      flex: 1;
+      background: #030712;
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .tester-send-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .tester-send-btn:hover {
+      background: #059669;
+    }
+
+    .tester-row {
+      margin-bottom: 14px;
+    }
+
+    .tester-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .tester-textarea {
+      width: 100%;
+      height: 140px;
+      background: #030712;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 10px;
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      resize: vertical;
+      outline: none;
+    }
+
+    .tester-response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      margin-bottom: 6px;
+    }
+
+    .status-indicator {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .status-indicator.success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .status-indicator.error { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <aside>
+    <div class="sidebar-header">
+      <div class="brand-logo">
+        <span>⚡ SMS Odoo</span>
+        <span class="brand-badge">REST API v1</span>
+      </div>
+      <div class="sidebar-search">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input type="text" id="apiSearch" placeholder="Filter endpoints... (Ctrl+K)" oninput="filterEndpoints(this.value)">
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+      <!-- Section 1 -->
+      <div class="nav-group-title">System & Health</div>
+      <a href="#endpoint-health" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/health</span>
+      </a>
+
+      <!-- Section 2 -->
+      <div class="nav-group-title">Authentication & Identity</div>
+      <a href="#endpoint-send-otp" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/send-otp</span>
+      </a>
+      <a href="#endpoint-register" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/register</span>
+      </a>
+      <a href="#endpoint-login" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/login</span>
+      </a>
+      <a href="#endpoint-verify-login" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/verify-login</span>
+      </a>
+      <a href="#endpoint-forgot-password" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/forgot-password</span>
+      </a>
+      <a href="#endpoint-reset-password" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/reset-password</span>
+      </a>
+      <a href="#endpoint-get-me" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/auth/me</span>
+      </a>
+      <a href="#endpoint-update-profile" class="nav-item">
+        <span class="method-tag tag-put">PUT</span>
+        <span>/api/auth/profile</span>
+      </a>
+      <a href="#endpoint-logout" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/logout</span>
+      </a>
+      <a href="#endpoint-create-subadmin" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/auth/create-subadmin</span>
+      </a>
+
+      <!-- Section 3 -->
+      <div class="nav-group-title">Sports & Slot Availability</div>
+      <a href="#endpoint-get-sports" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/sports</span>
+      </a>
+      <a href="#endpoint-get-slots" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/sports/slots</span>
+      </a>
+      <a href="#endpoint-get-pricing" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/sports/pricing</span>
+      </a>
+
+      <!-- Section 4 -->
+      <div class="nav-group-title">Court Booking Engine</div>
+      <a href="#endpoint-create-hold" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/bookings/hold</span>
+      </a>
+      <a href="#endpoint-confirm-hold" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/bookings/confirm</span>
+      </a>
+      <a href="#endpoint-release-hold" class="nav-item">
+        <span class="method-tag tag-delete">DEL</span>
+        <span>/api/bookings/hold/:id</span>
+      </a>
+      <a href="#endpoint-my-bookings" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/bookings/my-bookings</span>
+      </a>
+      <a href="#endpoint-get-booking" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/bookings/:id</span>
+      </a>
+      <a href="#endpoint-cancel-booking" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/bookings/:id/cancel</span>
+      </a>
+
+      <!-- Section 5 -->
+      <div class="nav-group-title">Admin Sports Config</div>
+      <a href="#endpoint-admin-pricing" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/admin/sports/pricing</span>
+      </a>
+      <a href="#endpoint-update-pricing" class="nav-item">
+        <span class="method-tag tag-put">PUT</span>
+        <span>/api/admin/sports/pricing</span>
+      </a>
+      <a href="#endpoint-admin-config" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/admin/sports/config</span>
+      </a>
+      <a href="#endpoint-update-config" class="nav-item">
+        <span class="method-tag tag-put">PUT</span>
+        <span>/api/admin/sports/config</span>
+      </a>
+
+      <!-- Section 6 -->
+      <div class="nav-group-title">Super Admin Data Engine</div>
+      <a href="#endpoint-super-overview" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/super-admin/overview</span>
+      </a>
+      <a href="#endpoint-super-models" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/super-admin/models</span>
+      </a>
+      <a href="#endpoint-super-get-data" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/super-admin/data/:model</span>
+      </a>
+      <a href="#endpoint-super-create-data" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/super-admin/data/:model</span>
+      </a>
+      <a href="#endpoint-super-update-data" class="nav-item">
+        <span class="method-tag tag-put">PUT</span>
+        <span>/api/super-admin/data/:model/:id</span>
+      </a>
+      <a href="#endpoint-super-delete-data" class="nav-item">
+        <span class="method-tag tag-delete">DEL</span>
+        <span>/api/super-admin/data/:model/:id</span>
+      </a>
+      <a href="#endpoint-super-query" class="nav-item">
+        <span class="method-tag tag-post">POST</span>
+        <span>/api/super-admin/query</span>
+      </a>
+      <a href="#endpoint-super-subadmins" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/super-admin/sub-admins</span>
+      </a>
+      <a href="#endpoint-super-update-module" class="nav-item">
+        <span class="method-tag tag-put">PUT</span>
+        <span>/api/super-admin/sub-admins/:id/module</span>
+      </a>
+
+      <!-- Section 7 -->
+      <div class="nav-group-title">Modules & Realtime</div>
+      <a href="#endpoint-module-sports" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/modules/sports</span>
+      </a>
+      <a href="#endpoint-module-staff" class="nav-item">
+        <span class="method-tag tag-get">GET</span>
+        <span>/api/modules/staff</span>
+      </a>
+      <a href="#section-sockets" class="nav-item">
+        <span class="method-tag tag-ws">WS</span>
+        <span>Socket.IO Availability</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Top Interactive Settings & Environment Bar -->
+    <div class="top-controls">
+      <div class="top-controls-header">
+        <h3>
+          <svg width="18" height="18" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          API Environment & Global Headers
+        </h3>
+        <div class="live-status" id="serverPingStatus">
+          <div class="live-status-dot"></div>
+          <span>Server Ready</span>
+        </div>
+      </div>
+      <div class="control-inputs">
+        <div class="input-group">
+          <label for="baseUrlInput">Base API URL</label>
+          <input type="text" id="baseUrlInput" value="http://localhost:5000" onchange="updateGlobalBaseUrl(this.value)">
+        </div>
+        <div class="input-group">
+          <label for="authTokenInput">Bearer JWT Token (Auto-injected into cURL & Tester)</label>
+          <input type="text" id="authTokenInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="updateGlobalToken(this.value)">
+        </div>
+        <button class="btn-test-ping" onclick="pingServer()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          Ping /api/health
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 1. SYSTEM & HEALTH -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-health">
+      <h2 class="section-title">
+        <span>⚡ System & Health Check</span>
+      </h2>
+      <p class="section-description">Verify database pooling, Neon Postgres branch connectivity, and backend runtime status.</p>
+
+      <!-- GET /api/health -->
+      <div class="endpoint-card" id="endpoint-health">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/health</span>
+            <span class="endpoint-summary">Check Server & Database Status</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Performs a raw query <code>SELECT 1</code> against Neon PostgreSQL and returns connected database name, branch status, and current timestamp.</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="table-container">
+                <div class="table-title">Request Details</div>
+                <table>
+                  <tr><th>Header</th><th>Value</th></tr>
+                  <tr><td>Content-Type</td><td><code>application/json</code></td></tr>
+                  <tr><td>Auth</td><td>None (Public)</td></tr>
+                </table>
+              </div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">cURL Command</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'curl-health')">Copy cURL</button>
+                </div>
+                <pre><code id="curl-health">curl -X GET "http://localhost:5000/api/health"</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (200 OK)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-health')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-health">{
+  "status": "ok",
+  "database": "connected",
+  "dbName": "neondb",
+  "neonBranch": "production",
+  "timestamp": "2026-11-21T10:30:00.000Z"
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/health', null, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 2. AUTHENTICATION & IDENTITY -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-auth">
+      <h2 class="section-title">
+        <span>🔐 Authentication & User Management</span>
+      </h2>
+      <p class="section-description">Email OTP-verified registration, credential login, password reset workflows, profile management, and sub-admin provisioning.</p>
+
+      <!-- POST /api/auth/send-register-otp -->
+      <div class="endpoint-card" id="endpoint-send-otp">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/send-register-otp</span>
+            <span class="endpoint-summary">Step 1: Request 6-digit OTP for Registration</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Sends a 6-digit numeric OTP to the specified email address for verification. Alias: <code>/api/auth/send-otp</code>. OTP expires in 10 minutes.</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="table-container">
+                <div class="table-title">JSON Request Body Schema</div>
+                <table>
+                  <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                  <tr><td>email</td><td>string</td><td><span class="param-required">Required</span></td><td>Recipient's valid email address</td></tr>
+                </table>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Request JSON Body</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'body-send-otp')">Copy JSON</button>
+                </div>
+                <pre><code id="body-send-otp">{
+  "email": "player.adelux@example.com"
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">cURL Command</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'curl-send-otp')">Copy cURL</button>
+                </div>
+                <pre><code id="curl-send-otp">curl -X POST "http://localhost:5000/api/auth/send-register-otp" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "player.adelux@example.com"}'</code></pre>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (200 OK)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-send-otp')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-send-otp">{
+  "message": "Verification OTP sent to your email.",
+  "email": "player.adelux@example.com"
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/send-register-otp', { email: 'player.adelux@example.com' }, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/auth/register -->
+      <div class="endpoint-card" id="endpoint-register">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/register</span>
+            <span class="endpoint-summary">Step 2: Submit Details with OTP to Complete Registration</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Verifies the entered OTP and creates a new user record in the database. Returns JWT auth token and sets an <code>httpOnly</code> cookie. (If OTP is not supplied, it automatically dispatches an OTP).</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="table-container">
+                <div class="table-title">JSON Request Body Schema</div>
+                <table>
+                  <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                  <tr><td>name</td><td>string</td><td><span class="param-optional">Optional</span></td><td>Full name of the user</td></tr>
+                  <tr><td>email</td><td>string</td><td><span class="param-required">Required</span></td><td>User email</td></tr>
+                  <tr><td>phone</td><td>string</td><td><span class="param-optional">Optional</span></td><td>Unique phone number</td></tr>
+                  <tr><td>password</td><td>string</td><td><span class="param-required">Required</span></td><td>Account password (hashed with bcrypt)</td></tr>
+                  <tr><td>membership</td><td>string</td><td><span class="param-optional">Optional</span></td><td><code>GOLD</code>, <code>SILVER</code>, or <code>JUNIOR</code> (default: JUNIOR)</td></tr>
+                  <tr><td>otp</td><td>string</td><td><span class="param-required">Required</span></td><td>6-digit code received via email</td></tr>
+                </table>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Request JSON Body</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'body-register')">Copy JSON</button>
+                </div>
+                <pre><code id="body-register">{
+  "name": "Alex Johnson",
+  "email": "alex.johnson@example.com",
+  "phone": "9876543210",
+  "password": "SecurePassword123!",
+  "membership": "GOLD",
+  "otp": "123456"
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">cURL Command</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'curl-register')">Copy cURL</button>
+                </div>
+                <pre><code id="curl-register">curl -X POST "http://localhost:5000/api/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alex Johnson", "email": "alex.johnson@example.com", "phone": "9876543210", "password": "SecurePassword123!", "membership": "GOLD", "otp": "123456"}'</code></pre>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (201 Created)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-register')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-register">{
+  "message": "User registered and verified successfully",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "c7a8b9f0-1234-5678-9abc-def012345678",
+    "name": "Alex Johnson",
+    "email": "alex.johnson@example.com",
+    "phone": "9876543210",
+    "membership": "GOLD",
+    "role": "MEMBER",
+    "module": null
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/register', { name: 'Alex Johnson', email: 'alex.johnson@example.com', phone: '9876543210', password: 'SecurePassword123!', membership: 'GOLD', otp: '123456' }, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/auth/login -->
+      <div class="endpoint-card" id="endpoint-login">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/login</span>
+            <span class="endpoint-summary">Step 1: Validate Email + Password & Dispatch Login OTP</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Validates account credentials and dispatches a 6-digit login 2FA OTP to the user's email.</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Request JSON Body</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'body-login')">Copy JSON</button>
+                </div>
+                <pre><code id="body-login">{
+  "email": "alex.johnson@example.com",
+  "password": "SecurePassword123!"
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">cURL Command</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'curl-login')">Copy cURL</button>
+                </div>
+                <pre><code id="curl-login">curl -X POST "http://localhost:5000/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "alex.johnson@example.com", "password": "SecurePassword123!"}'</code></pre>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (200 OK)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-login')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-login">{
+  "message": "Login OTP sent to your email. Please verify to complete login.",
+  "email": "alex.johnson@example.com"
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/login', { email: 'alex.johnson@example.com', password: 'SecurePassword123!' }, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/auth/verify-login -->
+      <div class="endpoint-card" id="endpoint-verify-login">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/verify-login</span>
+            <span class="endpoint-summary">Step 2: Submit OTP to Complete Login</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Validates the login OTP, returns signed JWT token, and sets the 7-day <code>httpOnly</code> cookie.</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Request JSON Body</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'body-verify-login')">Copy JSON</button>
+                </div>
+                <pre><code id="body-verify-login">{
+  "email": "alex.johnson@example.com",
+  "otp": "654321"
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">cURL Command</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'curl-verify-login')">Copy cURL</button>
+                </div>
+                <pre><code id="curl-verify-login">curl -X POST "http://localhost:5000/api/auth/verify-login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "alex.johnson@example.com", "otp": "654321"}'</code></pre>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (200 OK)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-verify-login')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-verify-login">{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "c7a8b9f0-1234-5678-9abc-def012345678",
+    "name": "Alex Johnson",
+    "email": "alex.johnson@example.com",
+    "phone": "9876543210",
+    "membership": "GOLD",
+    "role": "MEMBER",
+    "module": null
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/verify-login', { email: 'alex.johnson@example.com', otp: '654321' }, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/auth/forgot-password -->
+      <div class="endpoint-card" id="endpoint-forgot-password">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/forgot-password</span>
+            <span class="endpoint-summary">Initiate Password Recovery via Email OTP</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Sends a 6-digit password recovery code to registered user email.</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Request JSON Body</span>
+              <button class="btn-action" onclick="copySnippet(this, 'body-forgot')">Copy JSON</button>
+            </div>
+            <pre><code id="body-forgot">{
+  "email": "alex.johnson@example.com"
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/forgot-password', { email: 'alex.johnson@example.com' }, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/auth/reset-password -->
+      <div class="endpoint-card" id="endpoint-reset-password">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/reset-password</span>
+            <span class="endpoint-summary">Reset Password Using Verified OTP</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Validates OTP and sets the new hashed password.</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Request JSON Body</span>
+              <button class="btn-action" onclick="copySnippet(this, 'body-reset')">Copy JSON</button>
+            </div>
+            <pre><code id="body-reset">{
+  "email": "alex.johnson@example.com",
+  "otp": "123456",
+  "newPassword": "NewStrongPassword2026!"
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/reset-password', { email: 'alex.johnson@example.com', otp: '123456', newPassword: 'NewStrongPassword2026!' }, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/auth/me -->
+      <div class="endpoint-card" id="endpoint-get-me">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/auth/me</span>
+            <span class="endpoint-summary">Get Current User Session & Role</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">MEMBER / SUBADMIN / ADMIN</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns decoded user info from token payload (User ID, Email, Role, and Assigned Module).</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">cURL Command</span>
+              <button class="btn-action" onclick="copySnippet(this, 'curl-get-me')">Copy cURL</button>
+            </div>
+            <pre><code id="curl-get-me">curl -X GET "http://localhost:5000/api/auth/me" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/auth/me', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUT /api/auth/profile -->
+      <div class="endpoint-card" id="endpoint-update-profile">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-put">PUT</span>
+            <span class="endpoint-path">/api/auth/profile</span>
+            <span class="endpoint-summary">Update Profile Details & Password</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">AUTHENTICATED</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Allows the logged-in user to update their name, phone, or password. (Admins can also assign staff modules).</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Request JSON Body</span>
+              <button class="btn-action" onclick="copySnippet(this, 'body-update-profile')">Copy JSON</button>
+            </div>
+            <pre><code id="body-update-profile">{
+  "name": "Alexander J. Doe",
+  "phone": "9876543299",
+  "password": "BrandNewPassword123"
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('PUT', '/api/auth/profile', { name: 'Alexander J. Doe', phone: '9876543299' }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/auth/logout -->
+      <div class="endpoint-card" id="endpoint-logout">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/logout</span>
+            <span class="endpoint-summary">Clear Authentication Session</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Clears the <code>token</code> HTTP-only cookie.</p>
+          <div class="code-panel">
+            <pre><code>curl -X POST "http://localhost:5000/api/auth/logout"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/logout', null, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/auth/create-subadmin -->
+      <div class="endpoint-card" id="endpoint-create-subadmin">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/auth/create-subadmin</span>
+            <span class="endpoint-summary">Create Sub-Admin & Assign Module Access</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Creates both a Staff record (with role <code>SUBADMIN</code> and designated module) and a User record for login, and emails the credentials.</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="table-container">
+                <div class="table-title">JSON Request Body Schema</div>
+                <table>
+                  <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                  <tr><td>name</td><td>string</td><td><span class="param-optional">Optional</span></td><td>Name of sub-admin</td></tr>
+                  <tr><td>email</td><td>string</td><td><span class="param-required">Required</span></td><td>Official email address</td></tr>
+                  <tr><td>phone</td><td>string</td><td><span class="param-optional">Optional</span></td><td>Contact phone number</td></tr>
+                  <tr><td>password</td><td>string</td><td><span class="param-required">Required</span></td><td>Initial temporary password</td></tr>
+                  <tr><td>module</td><td>string</td><td><span class="param-required">Required</span></td><td>Assigned module (e.g. <code>sports</code>, <code>staff</code>, <code>cafe</code>)</td></tr>
+                </table>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Request JSON Body</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'body-create-subadmin')">Copy JSON</button>
+                </div>
+                <pre><code id="body-create-subadmin">{
+  "name": "Sarah Connor",
+  "email": "sarah.sports@adelux.club",
+  "phone": "9988776655",
+  "password": "ManagerPass2026!",
+  "module": "sports"
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (201 Created)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-create-subadmin')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-create-subadmin">{
+  "message": "Sub-admin created successfully for module 'sports'",
+  "subAdmin": {
+    "id": "u-456-uuid",
+    "name": "Sarah Connor",
+    "email": "sarah.sports@adelux.club",
+    "phone": "9988776655",
+    "role": "SUBADMIN",
+    "module": "sports",
+    "createdAt": "2026-11-21T10:30:00.000Z"
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/auth/create-subadmin', { name: 'Sarah Connor', email: 'sarah.sports@adelux.club', phone: '9988776655', password: 'ManagerPass2026!', module: 'sports' }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 3. SPORTS & SLOTS -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-sports">
+      <h2 class="section-title">
+        <span>🎾 Sports & Slot Availability</span>
+      </h2>
+      <p class="section-description">Public schedules, 30-minute interval capacity calculations, and dynamic membership pricing rates.</p>
+
+      <!-- GET /api/sports -->
+      <div class="endpoint-card" id="endpoint-get-sports">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/sports</span>
+            <span class="endpoint-summary">List All Sports, Capacities & Hours</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns all active court types (<code>CRICKET</code>, <code>TENNIS</code>, <code>BADMINTON</code>, <code>PADEL_COURT</code>) along with max court capacity, opening time, and closing time.</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Response Example (200 OK)</span>
+              <button class="btn-action" onclick="copySnippet(this, 'resp-get-sports')">Copy JSON</button>
+            </div>
+            <pre><code id="resp-get-sports">{
+  "sports": [
+    {
+      "sport": "PADEL_COURT",
+      "capacity": 8,
+      "basePrice": "1200.00",
+      "openTime": "06:00",
+      "closeTime": "22:00",
+      "isActive": true
+    },
+    {
+      "sport": "TENNIS",
+      "capacity": 4,
+      "basePrice": "800.00",
+      "openTime": "06:00",
+      "closeTime": "22:00",
+      "isActive": true
+    }
+  ]
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/sports', null, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/sports/slots -->
+      <div class="endpoint-card" id="endpoint-get-slots">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/sports/slots</span>
+            <span class="endpoint-summary">30-Minute Interval Slot Availability for a Sport & Date</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Generates 30-minute intervals in Asia/Kolkata timezone between openTime and closeTime, computing held capacity, confirmed bookings, remaining capacity, and availability state.</p>
+          
+          <div class="table-container">
+            <div class="table-title">Query Parameters</div>
+            <table>
+              <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Example</th><th>Description</th></tr>
+              <tr><td>sport</td><td>string</td><td><span class="param-required">Required</span></td><td><code>PADEL_COURT</code></td><td>Sport court identifier (<code>CRICKET</code>, <code>TENNIS</code>, <code>BADMINTON</code>, <code>PADEL_COURT</code>)</td></tr>
+              <tr><td>date</td><td>string</td><td><span class="param-required">Required</span></td><td><code>2026-11-22</code></td><td>Target date in YYYY-MM-DD format</td></tr>
+            </table>
+          </div>
+
+          <div class="details-grid">
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">cURL Command</span>
+                <button class="btn-action" onclick="copySnippet(this, 'curl-get-slots')">Copy cURL</button>
+              </div>
+              <pre><code id="curl-get-slots">curl -X GET "http://localhost:5000/api/sports/slots?sport=PADEL_COURT&date=2026-11-22"</code></pre>
+            </div>
+
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Response Example (200 OK)</span>
+                <button class="btn-action" onclick="copySnippet(this, 'resp-get-slots')">Copy JSON</button>
+              </div>
+              <pre><code id="resp-get-slots">{
+  "sport": "PADEL_COURT",
+  "date": "2026-11-22",
+  "slots": [
+    {
+      "time": "09:00",
+      "endTime": "09:30",
+      "totalCapacity": 8,
+      "bookedCount": 2,
+      "heldCount": 1,
+      "availableSpots": 5,
+      "status": "AVAILABLE"
+    },
+    {
+      "time": "09:30",
+      "endTime": "10:00",
+      "totalCapacity": 8,
+      "bookedCount": 8,
+      "heldCount": 0,
+      "availableSpots": 0,
+      "status": "FULL"
+    }
+  ]
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/sports/slots?sport=PADEL_COURT&date=2026-11-22', null, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/sports/pricing -->
+      <div class="endpoint-card" id="endpoint-get-pricing">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/sports/pricing</span>
+            <span class="endpoint-summary">Get Base Pricing & Tier Discounts</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns base prices and discounts for Gold (20%), Silver (10%), and Junior (15%) membership levels.</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Response Example (200 OK)</span>
+              <button class="btn-action" onclick="copySnippet(this, 'resp-pricing')">Copy JSON</button>
+            </div>
+            <pre><code id="resp-pricing">{
+  "pricing": [
+    {
+      "sport": "PADEL_COURT",
+      "basePrice": "1200.00",
+      "goldDiscount": "20.00",
+      "silverDiscount": "10.00",
+      "juniorDiscount": "15.00"
+    }
+  ]
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/sports/pricing', null, false)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 4. COURT BOOKING ENGINE -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-bookings">
+      <h2 class="section-title">
+        <span>📅 Court Booking Engine</span>
+      </h2>
+      <p class="section-description">Atomic 3-minute temporary capacity holds, concurrency protection via PostgreSQL <code>SELECT FOR UPDATE</code>, wallet balance deductions, and cancellation refunds.</p>
+
+      <!-- POST /api/bookings/hold -->
+      <div class="endpoint-card" id="endpoint-create-hold">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/bookings/hold</span>
+            <span class="endpoint-summary">Step 1: Create a 3-Minute Temporary Capacity Hold</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">MEMBER</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Acquires an atomic row lock on the <code>Slot</code> model, verifies capacity against active holds and confirmed bookings, calculates membership discount, and creates a hold with <code>expiresAt = now + 3 mins</code>.</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="table-container">
+                <div class="table-title">JSON Request Body Schema</div>
+                <table>
+                  <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                  <tr><td>sport</td><td>string</td><td><span class="param-required">Required</span></td><td><code>CRICKET</code>, <code>TENNIS</code>, <code>BADMINTON</code>, <code>PADEL_COURT</code></td></tr>
+                  <tr><td>date</td><td>string</td><td><span class="param-required">Required</span></td><td>Booking date (<code>YYYY-MM-DD</code>)</td></tr>
+                  <tr><td>startTime</td><td>string</td><td><span class="param-required">Required</span></td><td>Slot start time (e.g. <code>10:00</code>)</td></tr>
+                  <tr><td>playerCount</td><td>number</td><td><span class="param-optional">Optional</span></td><td>Number of players (default: 1)</td></tr>
+                </table>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Request JSON Body</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'body-create-hold')">Copy JSON</button>
+                </div>
+                <pre><code id="body-create-hold">{
+  "sport": "PADEL_COURT",
+  "date": "2026-11-22",
+  "startTime": "10:00",
+  "playerCount": 2
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">cURL Command</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'curl-create-hold')">Copy cURL</button>
+                </div>
+                <pre><code id="curl-create-hold">curl -X POST "http://localhost:5000/api/bookings/hold" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"sport": "PADEL_COURT", "date": "2026-11-22", "startTime": "10:00", "playerCount": 2}'</code></pre>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (201 Created)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-create-hold')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-create-hold">{
+  "message": "Slot held successfully for 3 minutes. Please confirm to finalize booking.",
+  "hold": {
+    "id": "bkg-hold-uuid-1234",
+    "userID": "user-uuid-5678",
+    "whichCourt": "PADEL_COURT",
+    "slot": "2026-11-22T04:30:00.000Z",
+    "endTime": "2026-11-22T05:00:00.000Z",
+    "playerCount": 2,
+    "basePrice": "1200.00",
+    "discountPercentage": "20.00",
+    "totalAmount": "960.00",
+    "status": "HELD",
+    "expiresAt": "2026-11-21T10:33:00.000Z"
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/bookings/hold', { sport: 'PADEL_COURT', date: '2026-11-22', startTime: '10:00', playerCount: 2 }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/bookings/confirm -->
+      <div class="endpoint-card" id="endpoint-confirm-hold">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/bookings/confirm</span>
+            <span class="endpoint-summary">Step 2: Confirm Booking & Deduct Balance</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">MEMBER</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Validates that the hold has not expired, checks user wallet balance (<code>User.amount >= totalAmount</code>), deducts the booking fee, marks status as <code>CONFIRMED</code>, and broadcasts availability update via Socket.IO.</p>
+          
+          <div class="details-grid">
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Request JSON Body</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'body-confirm-hold')">Copy JSON</button>
+                </div>
+                <pre><code id="body-confirm-hold">{
+  "holdId": "bkg-hold-uuid-1234"
+}</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">cURL Command</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'curl-confirm-hold')">Copy cURL</button>
+                </div>
+                <pre><code id="curl-confirm-hold">curl -X POST "http://localhost:5000/api/bookings/confirm" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"holdId": "bkg-hold-uuid-1234"}'</code></pre>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="code-panel-title">Response Example (200 OK)</span>
+                  <button class="btn-action" onclick="copySnippet(this, 'resp-confirm-hold')">Copy JSON</button>
+                </div>
+                <pre><code id="resp-confirm-hold">{
+  "message": "Booking confirmed successfully. Payment deducted from membership balance.",
+  "booking": {
+    "id": "bkg-hold-uuid-1234",
+    "status": "CONFIRMED",
+    "totalAmount": "960.00"
+  },
+  "remainingBalance": 4040.00
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/bookings/confirm', { holdId: 'bkg-hold-uuid-1234' }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DELETE /api/bookings/hold/:id -->
+      <div class="endpoint-card" id="endpoint-release-hold">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-delete">DEL</span>
+            <span class="endpoint-path">/api/bookings/hold/:id</span>
+            <span class="endpoint-summary">Release Unconfirmed Hold Early</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">MEMBER</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Immediately deletes a held booking so other members can grab the capacity slot without waiting for the 3-minute timer.</p>
+          <div class="code-panel">
+            <pre><code>curl -X DELETE "http://localhost:5000/api/bookings/hold/bkg-hold-uuid-1234" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('DELETE', '/api/bookings/hold/bkg-hold-uuid-1234', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/bookings/my-bookings -->
+      <div class="endpoint-card" id="endpoint-my-bookings">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/bookings/my-bookings</span>
+            <span class="endpoint-summary">List All Bookings for Current User</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">MEMBER</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns all bookings (active, confirmed, cancelled) associated with the current member's account ordered by slot date.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/bookings/my-bookings" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/bookings/my-bookings', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/bookings/:id -->
+      <div class="endpoint-card" id="endpoint-get-booking">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/bookings/:id</span>
+            <span class="endpoint-summary">Get Single Booking Details by ID</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">MEMBER / ADMIN</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Retrieves specific booking details, court type, timing, and payment invoice.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/bookings/bkg-hold-uuid-1234" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/bookings/bkg-hold-uuid-1234', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/bookings/:id/cancel -->
+      <div class="endpoint-card" id="endpoint-cancel-booking">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/bookings/:id/cancel</span>
+            <span class="endpoint-summary">Cancel Confirmed Booking with 50% Refund</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-member">MEMBER / ADMIN</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Cancels a confirmed court booking. If canceled at least 1 hour prior to slot start time, 50% of the total amount is automatically refunded back to the user's wallet (<code>User.amount</code>).</p>
+          <div class="details-grid">
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">cURL Command</span>
+                <button class="btn-action" onclick="copySnippet(this, 'curl-cancel-booking')">Copy cURL</button>
+              </div>
+              <pre><code id="curl-cancel-booking">curl -X POST "http://localhost:5000/api/bookings/bkg-hold-uuid-1234/cancel" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</code></pre>
+            </div>
+
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Response Example (200 OK)</span>
+                <button class="btn-action" onclick="copySnippet(this, 'resp-cancel-booking')">Copy JSON</button>
+              </div>
+              <pre><code id="resp-cancel-booking">{
+  "message": "Booking cancelled successfully. 50% refund credited to your wallet.",
+  "refundAmount": 480.00,
+  "newWalletBalance": 4520.00
+}</code></pre>
+            </div>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/bookings/bkg-hold-uuid-1234/cancel', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 5. ADMIN SPORTS CONFIGURATION -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-admin-sports">
+      <h2 class="section-title">
+        <span>⚙️ Admin Sports Configuration</span>
+      </h2>
+      <p class="section-description">Club managers can dynamically configure court capacities, operating hours, base pricing rates, and tier discounts.</p>
+
+      <!-- GET /api/admin/sports/pricing -->
+      <div class="endpoint-card" id="endpoint-admin-pricing">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/admin/sports/pricing</span>
+            <span class="endpoint-summary">Admin: Get All Sport Pricing Configurations</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns comprehensive pricing records for all court types.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/admin/sports/pricing" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/admin/sports/pricing', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUT /api/admin/sports/pricing -->
+      <div class="endpoint-card" id="endpoint-update-pricing">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-put">PUT</span>
+            <span class="endpoint-path">/api/admin/sports/pricing</span>
+            <span class="endpoint-summary">Admin: Update Pricing & Discounts</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Updates base slot price and percentage discounts for Gold, Silver, and Junior members.</p>
+          
+          <div class="details-grid">
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Request JSON Body</span>
+                <button class="btn-action" onclick="copySnippet(this, 'body-update-pricing')">Copy JSON</button>
+              </div>
+              <pre><code id="body-update-pricing">{
+  "sport": "PADEL_COURT",
+  "basePrice": 1400,
+  "goldDiscount": 25,
+  "silverDiscount": 15,
+  "juniorDiscount": 20
+}</code></pre>
+            </div>
+
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Response Example (200 OK)</span>
+                <button class="btn-action" onclick="copySnippet(this, 'resp-update-pricing')">Copy JSON</button>
+              </div>
+              <pre><code id="resp-update-pricing">{
+  "message": "Pricing for PADEL_COURT updated successfully",
+  "pricing": {
+    "sport": "PADEL_COURT",
+    "basePrice": "1400.00",
+    "goldDiscount": "25.00",
+    "silverDiscount": "15.00",
+    "juniorDiscount": "20.00"
+  }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('PUT', '/api/admin/sports/pricing', { sport: 'PADEL_COURT', basePrice: 1400, goldDiscount: 25, silverDiscount: 15, juniorDiscount: 20 }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/admin/sports/config -->
+      <div class="endpoint-card" id="endpoint-admin-config">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/admin/sports/config</span>
+            <span class="endpoint-summary">Admin: Get Capacities & Operating Times</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns operating hours (openTime, closeTime), max court capacities, and active flags.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/admin/sports/config" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/admin/sports/config', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUT /api/admin/sports/config -->
+      <div class="endpoint-card" id="endpoint-update-config">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-put">PUT</span>
+            <span class="endpoint-path">/api/admin/sports/config</span>
+            <span class="endpoint-summary">Admin: Update Court Capacity & Times</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Modifies max capacity, daily opening time, and daily closing time.</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Request JSON Body</span>
+              <button class="btn-action" onclick="copySnippet(this, 'body-update-config')">Copy JSON</button>
+            </div>
+            <pre><code id="body-update-config">{
+  "sport": "PADEL_COURT",
+  "capacity": 10,
+  "openTime": "06:00",
+  "closeTime": "23:00",
+  "isActive": true
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('PUT', '/api/admin/sports/config', { sport: 'PADEL_COURT', capacity: 10, openTime: '06:00', closeTime: '23:00', isActive: true }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 6. SUPER ADMIN UNIVERSAL DATABASE ENGINE -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-superadmin">
+      <h2 class="section-title">
+        <span>🛡️ Super Admin Universal Database Engine</span>
+      </h2>
+      <p class="section-description">Central schema reflection engine allowing dynamic, paginated, searchable CRUD operations across ANY table in the database without hardcoded endpoints.</p>
+
+      <!-- GET /api/super-admin/overview -->
+      <div class="endpoint-card" id="endpoint-super-overview">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/super-admin/overview</span>
+            <span class="endpoint-summary">Multi-Module Overview & Global Statistics</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns real-time record counts for all Prisma models (User, SportsBooking, Staff, Product, CafeOrder, etc.), total club revenue, and module health.</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Response Example (200 OK)</span>
+              <button class="btn-action" onclick="copySnippet(this, 'resp-super-overview')">Copy JSON</button>
+            </div>
+            <pre><code id="resp-super-overview">{
+  "system": "SMS Odoo Management Suite",
+  "database": "neondb",
+  "totalModels": 8,
+  "stats": {
+    "totalUsers": 142,
+    "totalBookings": 850,
+    "totalStaff": 12,
+    "totalProducts": 64,
+    "totalRevenue": "128450.00"
+  },
+  "modules": [
+    { "name": "sports", "status": "active", "records": 850 },
+    { "name": "cafe", "status": "active", "records": 310 },
+    { "name": "shop", "status": "active", "records": 195 }
+  ]
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/super-admin/overview', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/super-admin/models -->
+      <div class="endpoint-card" id="endpoint-super-models">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/super-admin/models</span>
+            <span class="endpoint-summary">Inspect Database Schema Models & Fields</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Introspects Prisma DMMF datamodel to return all models, field data types, primary keys, and relationships.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/super-admin/models" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/super-admin/models', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/super-admin/data/:model -->
+      <div class="endpoint-card" id="endpoint-super-get-data">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/super-admin/data/:model</span>
+            <span class="endpoint-summary">Universal Query Endpoint for ANY Database Table</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Query ANY table in the database. Supports automatic pluralization, slug matching (e.g. <code>users</code>, <code>sports-bookings</code>, <code>products</code>, <code>cafe-orders</code>), multi-field text search, column filtering, sorting, and pagination.</p>
+          
+          <div class="table-container">
+            <div class="table-title">Query Parameters</div>
+            <table>
+              <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
+              <tr><td>page</td><td>integer</td><td>1</td><td>Page number</td></tr>
+              <tr><td>limit</td><td>integer</td><td>20</td><td>Number of records per page (max: 100)</td></tr>
+              <tr><td>search</td><td>string</td><td>-</td><td>Fuzzy search across all string fields (name, email, etc.)</td></tr>
+              <tr><td>sortBy</td><td>string</td><td>createdAt / id</td><td>Field name to sort by</td></tr>
+              <tr><td>sortOrder</td><td>string</td><td>desc</td><td>Sort direction: <code>asc</code> or <code>desc</code></td></tr>
+              <tr><td>[fieldName]</td><td>any</td><td>-</td><td>Filter by exact match (e.g. <code>membership=GOLD</code>, <code>category=Equipment</code>)</td></tr>
+            </table>
+          </div>
+
+          <div class="details-grid">
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">cURL Command</span>
+                <button class="btn-action" onclick="copySnippet(this, 'curl-super-data')">Copy cURL</button>
+              </div>
+              <pre><code id="curl-super-data">curl -X GET "http://localhost:5000/api/super-admin/data/users?page=1&limit=10&membership=GOLD" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN"</code></pre>
+            </div>
+
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Response Example (200 OK)</span>
+                <button class="btn-action" onclick="copySnippet(this, 'resp-super-data')">Copy JSON</button>
+              </div>
+              <pre><code id="resp-super-data">{
+  "model": "User",
+  "pagination": {
+    "totalRecords": 35,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 4
+  },
+  "data": [
+    {
+      "id": "u-01",
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "9876543210",
+      "membership": "GOLD",
+      "amount": "5000.00"
+    }
+  ]
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/super-admin/data/users?page=1&limit=5', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/super-admin/data/:model -->
+      <div class="endpoint-card" id="endpoint-super-create-data">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/super-admin/data/:model</span>
+            <span class="endpoint-summary">Universal Create Record for ANY Database Table</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Dynamically creates a new record in any table with automatic schema type-casting and bcrypt hashing if creating a user with password.</p>
+          
+          <div class="details-grid">
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Example Request Body (Product)</span>
+                <button class="btn-action" onclick="copySnippet(this, 'body-super-create-prod')">Copy JSON</button>
+              </div>
+              <pre><code id="body-super-create-prod">{
+  "name": "Wilson Pro Staff Padel Racket",
+  "category": "Padel Gear",
+  "buyPrice": 4500,
+  "rentPrice": 250,
+  "size": "Standard",
+  "inStock": 15
+}</code></pre>
+            </div>
+
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">cURL Command</span>
+                <button class="btn-action" onclick="copySnippet(this, 'curl-super-create')">Copy cURL</button>
+              </div>
+              <pre><code id="curl-super-create">curl -X POST "http://localhost:5000/api/super-admin/data/products" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
+  -d '{"name": "Wilson Pro Staff Padel Racket", "category": "Padel Gear", "buyPrice": 4500, "rentPrice": 250, "size": "Standard", "inStock": 15}'</code></pre>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/super-admin/data/products', { name: 'Wilson Pro Staff Padel Racket', category: 'Padel Gear', buyPrice: 4500, rentPrice: 250, size: 'Standard', inStock: 15 }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUT /api/super-admin/data/:model/:id -->
+      <div class="endpoint-card" id="endpoint-super-update-data">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-put">PUT</span>
+            <span class="endpoint-path">/api/super-admin/data/:model/:id</span>
+            <span class="endpoint-summary">Universal Update Record by ID</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Updates fields on any table record identified by its UUID or primary key.</p>
+          <div class="code-panel">
+            <pre><code>curl -X PUT "http://localhost:5000/api/super-admin/data/products/RECORD_ID_HERE" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
+  -d '{"inStock": 25, "buyPrice": 4200}'</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('PUT', '/api/super-admin/data/products/RECORD_ID_HERE', { inStock: 25, buyPrice: 4200 }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DELETE /api/super-admin/data/:model/:id -->
+      <div class="endpoint-card" id="endpoint-super-delete-data">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-delete">DEL</span>
+            <span class="endpoint-path">/api/super-admin/data/:model/:id</span>
+            <span class="endpoint-summary">Universal Delete Record by ID</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Deletes a record from any database table by primary key.</p>
+          <div class="code-panel">
+            <pre><code>curl -X DELETE "http://localhost:5000/api/super-admin/data/products/RECORD_ID_HERE" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('DELETE', '/api/super-admin/data/products/RECORD_ID_HERE', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/super-admin/query -->
+      <div class="endpoint-card" id="endpoint-super-query">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-post">POST</span>
+            <span class="endpoint-path">/api/super-admin/query</span>
+            <span class="endpoint-summary">Safe Read-Only SQL Diagnostic Query Runner</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Executes safe read-only SQL diagnostics (only <code>SELECT</code> and <code>EXPLAIN</code> statements are allowed; destructive statements like <code>DROP</code>, <code>DELETE</code>, or <code>ALTER</code> are rejected).</p>
+          
+          <div class="details-grid">
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Request JSON Body</span>
+                <button class="btn-action" onclick="copySnippet(this, 'body-super-query')">Copy JSON</button>
+              </div>
+              <pre><code id="body-super-query">{
+  "query": "SELECT membership, count(*) as count FROM \"User\" GROUP BY membership;"
+}</code></pre>
+            </div>
+
+            <div class="code-panel">
+              <div class="code-panel-header">
+                <span class="code-panel-title">Response Example (200 OK)</span>
+                <button class="btn-action" onclick="copySnippet(this, 'resp-super-query')">Copy JSON</button>
+              </div>
+              <pre><code id="resp-super-query">{
+  "query": "SELECT membership, count(*) as count FROM \"User\" GROUP BY membership;",
+  "rowCount": 3,
+  "rows": [
+    { "membership": "GOLD", "count": 25 },
+    { "membership": "SILVER", "count": 48 },
+    { "membership": "JUNIOR", "count": 69 }
+  ]
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('POST', '/api/super-admin/query', { query: 'SELECT membership, count(*) as count FROM \"User\" GROUP BY membership;' }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/super-admin/sub-admins -->
+      <div class="endpoint-card" id="endpoint-super-subadmins">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/super-admin/sub-admins</span>
+            <span class="endpoint-summary">List All Sub-Admins and Their Assigned Modules</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Returns all staff members configured with <code>role = SUBADMIN</code> and their module designations.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/super-admin/sub-admins" \
+  -H "Authorization: Bearer ADMIN_JWT_TOKEN"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/super-admin/sub-admins', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUT /api/super-admin/sub-admins/:id/module -->
+      <div class="endpoint-card" id="endpoint-super-update-module">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-put">PUT</span>
+            <span class="endpoint-path">/api/super-admin/sub-admins/:id/module</span>
+            <span class="endpoint-summary">Reassign Sub-Admin Module Access</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-admin">ADMIN ONLY</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Reassigns a staff member's module permission (e.g. from <code>cafe</code> to <code>sports</code>).</p>
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">Request JSON Body</span>
+              <button class="btn-action" onclick="copySnippet(this, 'body-super-mod')">Copy JSON</button>
+            </div>
+            <pre><code id="body-super-mod">{
+  "module": "sports"
+}</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('PUT', '/api/super-admin/sub-admins/STAFF_ID/module', { module: 'sports' }, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 7. MODULE AUTHORIZATION GUARDS -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-modules">
+      <h2 class="section-title">
+        <span>👥 Role & Module Protected Endpoints</span>
+      </h2>
+      <p class="section-description">Demonstration of granular RBAC where sub-admins are restricted to their designated modules, while Super Admins have universal clearance.</p>
+
+      <!-- GET /api/modules/sports -->
+      <div class="endpoint-card" id="endpoint-module-sports">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/modules/sports</span>
+            <span class="endpoint-summary">Sports Module Dashboard Guard</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-subadmin">SUBADMIN (sports) / ADMIN</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Accessible only by Super Admins or Sub-Admins who have <code>module: "sports"</code> assigned.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/modules/sports" \
+  -H "Authorization: Bearer SUBADMIN_OR_ADMIN_TOKEN"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/modules/sports', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/modules/staff -->
+      <div class="endpoint-card" id="endpoint-module-staff">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-get">GET</span>
+            <span class="endpoint-path">/api/modules/staff</span>
+            <span class="endpoint-summary">Staff Module Dashboard Guard</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-subadmin">SUBADMIN (staff) / ADMIN</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <p class="endpoint-description">Accessible only by Super Admins or Sub-Admins who have <code>module: "staff"</code> assigned.</p>
+          <div class="code-panel">
+            <pre><code>curl -X GET "http://localhost:5000/api/modules/staff" \
+  -H "Authorization: Bearer SUBADMIN_OR_ADMIN_TOKEN"</code></pre>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn-try" onclick="openTester('GET', '/api/modules/staff', null, true)">⚡ Test Endpoint</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 8. REAL-TIME SOCKET.IO -->
+    <!-- ========================================== -->
+    <section class="api-section" id="section-sockets">
+      <h2 class="section-title">
+        <span>🔄 Socket.IO Real-Time Availability Room</span>
+      </h2>
+      <p class="section-description">Live WebSocket subscription for padel and court slots. Emits instant updates when holds are created, confirmed, expired, or cancelled.</p>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <div class="endpoint-meta">
+            <span class="method-tag tag-ws">WS</span>
+            <span class="endpoint-path">ws://localhost:5000 (Socket.IO)</span>
+            <span class="endpoint-summary">Client Event Specifications</span>
+          </div>
+          <div class="endpoint-badges">
+            <span class="role-badge role-public">PUBLIC</span>
+          </div>
+        </div>
+        <div class="endpoint-body">
+          <div class="details-grid">
+            <div>
+              <div class="table-container">
+                <div class="table-title">Client-to-Server Events</div>
+                <table>
+                  <tr><th>Event Name</th><th>Payload</th><th>Description</th></tr>
+                  <tr><td><code>join_sport_room</code></td><td><code>{ "sport": "PADEL_COURT", "date": "2026-11-22" }</code></td><td>Join date/court room</td></tr>
+                  <tr><td><code>leave_sport_room</code></td><td><code>{ "sport": "PADEL_COURT", "date": "2026-11-22" }</code></td><td>Leave date/court room</td></tr>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <div class="table-container">
+                <div class="table-title">Server-to-Client Broadcasts</div>
+                <table>
+                  <tr><th>Event Name</th><th>Payload</th><th>Trigger</th></tr>
+                  <tr><td><code>slot_updated</code></td><td><code>{ "sport", "date", "slotTime", "availableSpots" }</code></td><td>Hold created, confirmed, or cancelled</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span class="code-panel-title">JavaScript Client Example</span>
+              <button class="btn-action" onclick="copySnippet(this, 'code-socket-client')">Copy JS</button>
+            </div>
+            <pre><code id="code-socket-client">import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000", { withCredentials: true });
+
+socket.on("connect", () => {
+  console.log("Connected with Socket ID:", socket.id);
+  // Join live room for Padel Court on 2026-11-22
+  socket.emit("join_sport_room", { sport: "PADEL_COURT", date: "2026-11-22" });
+});
+
+socket.on("slot_updated", (data) => {
+  console.log("Live Slot Update Received:", data);
+  // data: { sport: 'PADEL_COURT', date: '2026-11-22', slotTime: '10:00', available: 5 }
+});</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Live Tester Drawer / Modal -->
+  <div id="testerModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⚡ Interactive API Request Tester</h3>
+        <button class="modal-close" onclick="closeTester()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="tester-url-bar">
+          <span class="tester-method" id="modalMethod">POST</span>
+          <input type="text" class="tester-url" id="modalUrl" value="http://localhost:5000/api/health">
+          <button class="tester-send-btn" id="modalSendBtn" onclick="executeTestRequest()">Send Request</button>
+        </div>
+
+        <div class="tester-row" id="bodyRow">
+          <label class="tester-label">JSON Request Body</label>
+          <textarea class="tester-textarea" id="modalBody" placeholder='{\n  "key": "value"\n}'></textarea>
+        </div>
+
+        <div class="tester-response-header">
+          <label class="tester-label">Response Output</label>
+          <span id="responseStatus" class="status-indicator">Idle</span>
+        </div>
+        <textarea class="tester-textarea" id="modalResponse" style="height: 180px;" readonly placeholder="Click 'Send Request' to view live response output..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast">Copied to clipboard!</div>
+
+  <script>
+    let globalBaseUrl = "http://localhost:5000";
+    let globalAuthToken = "";
+
+    function updateGlobalBaseUrl(val) {
+      globalBaseUrl = val.replace(/\/$/, "");
+      document.querySelectorAll("code").forEach(el => {
+        if (el.textContent.includes("http://localhost:5000")) {
+          el.textContent = el.textContent.replaceAll("http://localhost:5000", globalBaseUrl);
+        }
+      });
+      showToast("Updated Base API URL to: " + globalBaseUrl);
+    }
+
+    function updateGlobalToken(token) {
+      globalAuthToken = token.trim();
+      document.querySelectorAll("code").forEach(el => {
+        if (el.textContent.includes("YOUR_TOKEN_HERE") || el.textContent.includes("ADMIN_JWT_TOKEN")) {
+          // If token is empty, keep placeholder
+          const replacement = globalAuthToken || "YOUR_TOKEN_HERE";
+          el.textContent = el.textContent.replace(/Bearer [A-Za-z0-9_.-]+/, `Bearer ${replacement}`);
+        }
+      });
+      if (globalAuthToken) {
+        showToast("Injected Bearer Token into requests");
+      }
+    }
+
+    function copySnippet(btn, elementId) {
+      const codeEl = document.getElementById(elementId);
+      if (!codeEl) return;
+      const text = codeEl.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove("copied");
+        }, 2000);
+        showToast("Snippet copied to clipboard");
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+    function filterEndpoints(query) {
+      const q = query.toLowerCase().trim();
+      const items = document.querySelectorAll(".nav-item");
+      const cards = document.querySelectorAll(".endpoint-card");
+
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(q) ? "flex" : "none";
+      });
+
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(q) ? "block" : "none";
+      });
+    }
+
+    // Modal Tester Functions
+    function openTester(method, path, bodyObj, requiresAuth) {
+      const modal = document.getElementById("testerModal");
+      const methodEl = document.getElementById("modalMethod");
+      const urlEl = document.getElementById("modalUrl");
+      const bodyEl = document.getElementById("modalBody");
+      const bodyRow = document.getElementById("bodyRow");
+      const respEl = document.getElementById("modalResponse");
+      const statusEl = document.getElementById("responseStatus");
+
+      methodEl.textContent = method;
+      methodEl.className = "tester-method tag-" + method.toLowerCase();
+      urlEl.value = globalBaseUrl + path;
+      respEl.value = "";
+      statusEl.textContent = "Ready";
+      statusEl.className = "status-indicator";
+
+      if (bodyObj && (method === "POST" || method === "PUT")) {
+        bodyRow.style.display = "block";
+        bodyEl.value = JSON.stringify(bodyObj, null, 2);
+      } else {
+        bodyRow.style.display = (method === "POST" || method === "PUT") ? "block" : "none";
+        bodyEl.value = "";
+      }
+
+      modal.classList.add("open");
+    }
+
+    function closeTester() {
+      document.getElementById("testerModal").classList.remove("open");
+    }
+
+    async function executeTestRequest() {
+      const method = document.getElementById("modalMethod").textContent.trim();
+      const url = document.getElementById("modalUrl").value.trim();
+      const bodyText = document.getElementById("modalBody").value.trim();
+      const respEl = document.getElementById("modalResponse");
+      const statusEl = document.getElementById("responseStatus");
+      const sendBtn = document.getElementById("modalSendBtn");
+
+      sendBtn.textContent = "Sending...";
+      sendBtn.disabled = true;
+      statusEl.textContent = "Connecting...";
+
+      const headers = { "Content-Type": "application/json" };
+      if (globalAuthToken) {
+        headers["Authorization"] = "Bearer " + globalAuthToken;
+      }
+
+      try {
+        const options = {
+          method,
+          headers,
+          credentials: "include",
+        };
+
+        if (bodyText && (method === "POST" || method === "PUT")) {
+          options.body = bodyText;
+        }
+
+        const startTime = performance.now();
+        const res = await fetch(url, options);
+        const duration = Math.round(performance.now() - startTime);
+
+        statusEl.textContent = `${res.status} ${res.statusText} (${duration}ms)`;
+        statusEl.className = "status-indicator " + (res.ok ? "success" : "error");
+
+        const contentType = res.headers.get("content-type") || "";
+        let data;
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+          respEl.value = JSON.stringify(data, null, 2);
+        } else {
+          data = await res.text();
+          respEl.value = data;
+        }
+      } catch (err) {
+        statusEl.textContent = "Network Error";
+        statusEl.className = "status-indicator error";
+        respEl.value = "Failed to connect to backend: " + err.message + "\n\nMake sure your server is running at " + globalBaseUrl;
+      } finally {
+        sendBtn.textContent = "Send Request";
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function pingServer() {
+      const statusEl = document.getElementById("serverPingStatus");
+      statusEl.innerHTML = `<span style="color:#fbbf24">Pinging ${globalBaseUrl}...</span>`;
+      try {
+        const res = await fetch(globalBaseUrl + "/api/health");
+        const data = await res.json();
+        if (data.status === "ok") {
+          statusEl.innerHTML = `<div class="live-status-dot"></div><span>Connected (${data.database})</span>`;
+          showToast("Live connection verified: " + data.dbName);
+        } else {
+          statusEl.innerHTML = `<span style="color:#f87171">Status: ${data.status}</span>`;
+        }
+      } catch (err) {
+        statusEl.innerHTML = `<span style="color:#f87171">Offline (${err.message})</span>`;
+        showToast("Cannot reach " + globalBaseUrl);
+      }
+    }
+
+    // Keyboard shortcut (Ctrl+K to focus search)
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        document.getElementById("apiSearch").focus();
+      }
+      if (e.key === "Escape") {
+        closeTester();
+      }
+    });
+  </script>
+</body>
+</html>

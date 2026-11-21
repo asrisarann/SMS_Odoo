@@ -1,10 +1,20 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import prisma from "./config/prisma.js";
 import sportsShopRouter from "./modules/sportsShop/sportsShop.routes.js";
 import authRoutes from "./common/auth/auth.route.js";
+import sportsRoutes from "./modules/sports/routes/sports.route.js";
+import bookingRoutes from "./modules/sports/routes/booking.route.js";
+import adminSportsRoutes from "./modules/sports/routes/admin.route.js";
+import { superAdminRoutes } from "./modules/superAdmin/index.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
+import frontDeskRouter from "./modules/front-desk/index.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -19,6 +29,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/shop", sportsShopRouter);
+// Serve Interactive HTML API Documentation
+app.get(["/api/docs", "/docs"], (req, res) => {
+  res.sendFile(path.resolve(__dirname, "../../api-docs.html"));
+});
 
 // Health and DB connectivity check endpoint
 app.get("/api/health", async (req, res) => {
@@ -41,10 +55,20 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Authentication Routes
+// Auth routes (accessible via /api/auth or /auth)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
 
-// Example protected module routes demonstrating role & module-based access
+// Sports & Court Booking Routes
+app.use("/api/sports", sportsRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/admin/sports", adminSportsRoutes);
+
+// Super Admin General Management Routes (Access to all database models across modules)
+app.use("/api/super-admin", superAdminRoutes);
+app.use("/api/admin", superAdminRoutes);
+
+// Protected module routes demonstrating role & module-based access
 // Sub-admin of 'staff' can access /api/modules/staff, Admin can access all modules
 app.get("/api/modules/staff", authenticate, authorizeModule("staff"), (req, res) => {
   res.json({
@@ -60,5 +84,10 @@ app.get("/api/modules/sports", authenticate, authorizeModule("sports"), (req, re
     user: req.user,
   });
 });
+
+// Front Desk module routes
+app.use("/api/front-desk", frontDeskRouter);
+app.use("/api", frontDeskRouter);
+app.use(frontDeskRouter);
 
 export default app;
