@@ -2,6 +2,7 @@ import os
 
 import jwt
 from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import InvalidTokenError
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -10,23 +11,31 @@ from app.database import get_db
 from app.schemas.auth import AuthenticatedUser
 
 
-def get_bearer_or_cookie_token(request: Request) -> str | None:
-    cookie_token = request.cookies.get("token")
-    if cookie_token:
-        return cookie_token
+bearer_scheme = HTTPBearer(auto_error=False, scheme_name="JWTBearer")
+
+
+def get_bearer_or_cookie_token(
+    request: Request,
+    bearer_credentials: HTTPAuthorizationCredentials | None = None,
+) -> str | None:
+    if isinstance(bearer_credentials, HTTPAuthorizationCredentials):
+        return bearer_credentials.credentials
 
     authorization = request.headers.get("Authorization")
     if authorization and authorization.lower().startswith("bearer "):
-        return authorization[7:].strip() or None
+        bearer_token = authorization[7:].strip()
+        if bearer_token:
+            return bearer_token
 
-    return None
+    return request.cookies.get("token") or None
 
 
 def get_current_user(
     request: Request,
     db: Session = Depends(get_db),
+    bearer_credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> AuthenticatedUser:
-    token = get_bearer_or_cookie_token(request)
+    token = get_bearer_or_cookie_token(request, bearer_credentials)
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -78,7 +78,7 @@ def create_menu_item(
         description=payload.description,
         category=payload.category,
         price=payload.price,
-        isAvailable=payload.is_available,
+        isAvailable=payload.is_available,  
         createdAt=now,
         updatedAt=now,
     )
@@ -120,6 +120,8 @@ def update_menu_item(
     db.commit()
     db.refresh(item)
     return serialize_item(item)
+
+
 
 
 @router.delete("/admin/menu/{item_id}", response_model=MenuItemResponse)

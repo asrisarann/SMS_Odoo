@@ -30,3 +30,18 @@ class CafeOrderResponse(BaseModel):
     subtotal: Decimal | None = None
     discount_amount: Decimal | None = None
     total_amount: Decimal
+
+
+class AdminOrderPage(BaseModel):
+    orders: list[CafeOrderResponse]
+    total_count: int
+    current_page: int
+    page_size: int
+    total_pages: int
+
+
+class AdminOrderSummary(BaseModel):
+    total_orders: int
+    total_sales_amount: Decimal
+    average_order_value: Decimal
+    orders_in_date_range: int

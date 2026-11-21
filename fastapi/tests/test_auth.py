@@ -155,6 +155,19 @@ def test_valid_member_token():
     assert get_bearer_or_cookie_token(request) == token
 
 
+def test_bearer_token_takes_precedence_over_cookie():
+    os.environ["JWT_SECRET"] = SECRET
+    token = make_token("member-1", "MEMBER")
+    request = make_request(
+        authorization=f"Bearer {token}",
+        cookie_token="stale-cookie-token",
+    )
+
+    user = get_current_user(request, FakeDb())
+
+    assert user.id == "member-1"
+
+
 def test_valid_admin_token():
     os.environ["JWT_SECRET"] = SECRET
     token = make_token("admin-1", "ADMIN")
