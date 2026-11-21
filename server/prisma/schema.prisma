@@ -65,6 +65,17 @@ model CafeOrder {
   user        User     @relation(fields: [userID], references: [id])
 }
 
+model CafeMenuItem {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  price       Decimal  @db.Decimal(10, 2)
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ---------------- SPORT SHOP PURCHASE ----------------
 
 model SportShopPurchase {
