@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Membership {
+  GOLD
+  SILVER
+  JUNIOR
+}
+
+enum CourtType {
+  CRICKET
+  TENNIS
+  BADMINTON
+  PADEL_COURT
+}
+
+// ---------------- USER ----------------
+
+model User {
+  id             String       @id @default(uuid())
+  name           String
+  phone          String       @unique
+  email          String       @unique
+  membership     Membership
+  renewalDate    DateTime?
+  pastMembership Membership[]
+  lastEntry      DateTime?
+  amount         Decimal      @default(0) @db.Decimal(10, 2)
+  password       String?
+  sportsBookings SportsBooking[]
+  cafeOrders     CafeOrder[]
+  shopPurchases  SportShopPurchase[]
+}
+
+// ---------------- SPORTS BOOKING ----------------
+
+model SportsBooking {
+  id        String    @id @default(uuid())
+  userID    String
+  slot      DateTime
+  whichCourt CourtType
+  user      User      @relation(fields: [userID], references: [id])
+}
+
+// ---------------- CAFE ----------------
+
+model CafeOrder {
+  id          String   @id @default(uuid())
+  userID      String
+  tableNumber Int?
+  orderItems  String[]
+  orderNumber String   @unique
+  dateTime    DateTime @default(now())
+  totalAmount Decimal  @db.Decimal(10, 2)
+
+  user        User     @relation(fields: [userID], references: [id])
+}
+
+// ---------------- SPORT SHOP PURCHASE ----------------
+
+model SportShopPurchase {
+  id           String   @id @default(uuid())
+  userID       String
+  name         String
+  phone        String
+  items        String[]
+  purchaseDate DateTime @default(now())
+  totalAmount  Decimal  @db.Decimal(10, 2)
+
+  user         User     @relation(fields: [userID], references: [id])
+}
+
+// ---------------- PRODUCT / STOCK ----------------
+
+model Product {
+  id        String   @id @default(uuid())
+  name      String
+  category  String
+  buyPrice  Decimal  @db.Decimal(10, 2)
+  rentPrice Decimal? @db.Decimal(10, 2)
+  size      String?
+  inStock   Int      @default(0)
+}
+
+
+model Staff {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String
+  role      String
+  designation String?
+  salary    Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+}
