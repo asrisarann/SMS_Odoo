@@ -1,11 +1,20 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import prisma from "./config/prisma.js";
+import authRoutes from "./common/auth/auth.route.js";
+import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
 import frontDeskRouter from "./modules/front-desk/index.js";
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -29,10 +38,5 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
-
-// Front Desk module routes
-app.use("/api/front-desk", frontDeskRouter);
-app.use("/api", frontDeskRouter);
-app.use(frontDeskRouter);
 
 export default app;
