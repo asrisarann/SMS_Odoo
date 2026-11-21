@@ -9,6 +9,14 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  SUPERADMIN
+  ADMIN
+  SUBADMIN
+  STAFF
+  MEMBER
+}
+
 enum Membership {
   GOLD
   SILVER
@@ -41,6 +49,7 @@ model User {
   name           String
   phone          String              @unique
   email          String              @unique
+  role           Role                @default(MEMBER)
   membership     Membership
   renewalDate    DateTime?
   lastReminderSent DateTime?

@@ -59,3 +59,8 @@
 - Implemented: Simplified `server/src/server.js` by removing custom signal handlers and graceful shutdown boilerplate (`handleShutdown`), keeping process lifecycle management lean and straightforward.
 - Used: Node.js standard process handling.
 - Verification: Full server test suite (`npm test`) passed with 15/15 checks; root workspace build (`npm run build`) passed cleanly.
+
+## 13. User Role Field & Super Admin Verification System
+- Implemented: Added PostgreSQL `Role` enum (`SUPERADMIN`, `ADMIN`, `SUBADMIN`, `STAFF`, `MEMBER`) and added the `role` column to the `User` table (default `MEMBER`). Implemented simple role verification with helper functions (`isSuperAdminRole`), authentication endpoints (`GET /api/auth/verify-role`, `GET /api/auth/verify-superadmin`), super admin verification portal (`GET /api/super-admin/verify`), dynamic role assignment (`PUT /api/super-admin/users/:id/role`), and role distribution metrics in multi-module database overview (`byRole`).
+- Used: PostgreSQL enum, Prisma ORM (v7), Express middleware, JWT RBAC.
+- Verification: 6 live integration tests in `server/test-user-roles.js` verifying each role, role guards (200 for SUPERADMIN/ADMIN, 403 for SUBADMIN/STAFF/MEMBER), role promotion/demotion, invalid role rejection, and database overview role aggregation; all 21 server tests passed (`npm test`); root workspace build (`npm run build`) passed cleanly.

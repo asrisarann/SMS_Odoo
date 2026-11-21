@@ -11,6 +11,7 @@ import {
   updateProfile,
   logout,
   getMe,
+  verifyRole,
 } from "./auth.controller.js";
 import { authenticate, requireRoles } from "../middlewares/auth.middleware.js";
 
@@ -25,8 +26,8 @@ router.post("/send-otp", sendRegisterOtp); // Convenience alias
 router.post("/register", register);
 router.post("/verify-register", verifyRegisterOtp);
 
-// Login endpoints
-router.post("/login" , authenticate ,   login);
+// Login endpoints (public - credentials and OTP are submitted here)
+router.post("/login", login);
 router.post("/verify-login", verifyLoginOtp);
 
 // Password recovery endpoints
@@ -38,9 +39,17 @@ router.post("/logout", logout);
 
 // Protected Endpoints
 router.get("/me", authenticate, getMe);
+router.get("/verify-role", authenticate, verifyRole);
+router.get("/verify-superadmin", authenticate, requireRoles("SUPERADMIN", "ADMIN"), (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "User is a verified Super Admin",
+    user: req.user,
+  });
+});
 router.put("/profile", authenticate, updateProfile);
 
-// Admin-Only: Create Sub-Admin with assigned module
-router.post("/create-subadmin", authenticate, requireRoles("ADMIN"), createSubAdmin);
+// Admin / Super Admin: Create Sub-Admin with assigned module
+router.post("/create-subadmin", authenticate, requireRoles("SUPERADMIN", "ADMIN"), createSubAdmin);
 
 export default router;

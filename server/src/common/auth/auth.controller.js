@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../../config/prisma.js";
 import { generateOtp, sendOtpEmail, sendEmail } from "../utils/mailer.js";
+import { isSuperAdminRole } from "../middlewares/auth.middleware.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "sms_odoo_jwt_secret_super_secure_key";
 
@@ -35,8 +36,8 @@ const generateToken = (account) => {
 
 /**
  * Helper to resolve user account and role.
- * If user exists in Staff table, role and module are determined from Staff.
- * Otherwise, default role is MEMBER.
+ * User role stored in User table is authoritative.
+ * Falls back to Staff record role or default 'MEMBER'.
  */
 const getUserWithRole = async (email) => {
   const normalizedEmail = email.trim().toLowerCase();
@@ -45,9 +46,14 @@ const getUserWithRole = async (email) => {
 
   const staff = await prisma.staff.findUnique({ where: { email: normalizedEmail } });
 
+  const effectiveRole =
+    user.role && user.role !== "MEMBER"
+      ? user.role
+      : staff?.role || user.role || "MEMBER";
+
   return {
     ...user,
-    role: staff?.role || "MEMBER",
+    role: effectiveRole,
     module: staff?.designation || null,
     staffRecord: staff || null,
   };
@@ -101,7 +107,7 @@ export const sendRegisterOtp = async (req, res) => {
  */
 export const register = async (req, res) => {
   try {
-    const { name, email, phone, password, membership, otp } = req.body;
+    const { name, email, phone, password, membership, role, otp } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
@@ -133,6 +139,8 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const userPhone = (phone || "").trim() || `user_${Date.now()}`;
     const userMembership = membership ? membership.toUpperCase() : "JUNIOR";
+    const allowedRoles = ["SUPERADMIN", "ADMIN", "SUBADMIN", "STAFF", "MEMBER"];
+    const userRole = role && allowedRoles.includes(role.toUpperCase()) ? role.toUpperCase() : "MEMBER";
 
     const newUser = await prisma.user.create({
       data: {
@@ -141,6 +149,7 @@ export const register = async (req, res) => {
         phone: userPhone,
         password: hashedPassword,
         membership: userMembership,
+        role: userRole,
       },
       select: {
         id: true,
@@ -148,6 +157,7 @@ export const register = async (req, res) => {
         email: true,
         phone: true,
         membership: true,
+        role: true,
       },
     });
 
@@ -156,7 +166,7 @@ export const register = async (req, res) => {
 
     const fullUser = {
       ...newUser,
-      role: "MEMBER",
+      role: newUser.role || "MEMBER",
       module: null,
     };
 
@@ -326,6 +336,7 @@ export const createSubAdmin = async (req, res) => {
         phone: subPhone,
         password: hashedPassword,
         membership: "JUNIOR",
+        role: "SUBADMIN",
       },
     });
 
@@ -466,11 +477,12 @@ export const updateProfile = async (req, res) => {
         email: true,
         phone: true,
         membership: true,
+        role: true,
       },
     });
 
     // If Admin is updating module for a staff/subadmin:
-    if (module && req.user.role === "ADMIN") {
+    if (module && isSuperAdminRole(req.user.role)) {
       await prisma.staff.updateMany({
         where: { email: updatedUser.email },
         data: { designation: module.trim() },
@@ -481,7 +493,7 @@ export const updateProfile = async (req, res) => {
       message: "Profile updated successfully",
       user: {
         ...updatedUser,
-        role: req.user.role,
+        role: updatedUser.role || req.user.role,
         module: module || req.user.module,
       },
     });
@@ -505,8 +517,37 @@ export const logout = (req, res) => {
 
 /**
  * 11. Get Current User (Get Me):
- * Returns authenticated user profile.
+ * Returns authenticated user profile including verified role.
  */
 export const getMe = (req, res) => {
-  return res.status(200).json({ user: req.user });
+  return res.status(200).json({
+    user: {
+      ...req.user,
+      isSuperAdmin: isSuperAdminRole(req.user.role),
+    },
+  });
+};
+
+/**
+ * 12. Verify User Role & Super Admin Status:
+ * Returns explicit role and boolean flags (isSuperAdmin, isSubAdmin, isStaff, isMember).
+ */
+export const verifyRole = (req, res) => {
+  const userRole = (req.user?.role || "MEMBER").toUpperCase();
+  const isSuperAdmin = isSuperAdminRole(userRole);
+  const isSubAdmin = userRole === "SUBADMIN";
+  const isStaff = userRole === "STAFF";
+  const isMember = userRole === "MEMBER";
+
+  return res.status(200).json({
+    id: req.user.id,
+    name: req.user.name,
+    email: req.user.email,
+    role: userRole,
+    isSuperAdmin,
+    isSubAdmin,
+    isStaff,
+    isMember,
+    module: req.user.module || null,
+  });
 };

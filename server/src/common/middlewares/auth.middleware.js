@@ -21,10 +21,6 @@ export const authenticate = async (req, res, next) => {
     }
     
     const decoded = jwt.verify(token, JWT_SECRET);
-    debugger;
-    res.send(decoded) ;
-
-
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
@@ -33,6 +29,7 @@ export const authenticate = async (req, res, next) => {
         name: true,
         email: true,
         phone: true,
+        role: true,
         membership: true,
       },
     });
@@ -41,12 +38,19 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ message: "User not found or token invalid." });
     }
 
-    // Check staff table for role and assigned module (stored in designation)
+    // Check staff table for assigned module if sub-admin or staff
     const staff = await prisma.staff.findUnique({ where: { email: user.email } });
+
+    // Determine effective role: user.role is authoritative if not default MEMBER,
+    // otherwise fallback to Staff table role or decoded token role
+    const effectiveRole =
+      user.role && user.role !== "MEMBER"
+        ? user.role
+        : staff?.role || user.role || decoded.role || "MEMBER";
 
     req.user = {
       ...user,
-      role: staff?.role || decoded.role || "MEMBER",
+      role: effectiveRole,
       module: staff?.designation || decoded.module || null,
     };
 
@@ -60,9 +64,17 @@ export const authenticate = async (req, res, next) => {
 };
 
 /**
+ * Helper to check whether a role string represents Super Admin
+ */
+export const isSuperAdminRole = (role) => {
+  const r = (role || "").toUpperCase();
+  return r === "SUPERADMIN" || r === "ADMIN";
+};
+
+/**
  * Role-Based Access Control Middleware:
  * Verifies that the authenticated user possesses one of the allowed roles.
- * Allowed roles: 'ADMIN', 'SUBADMIN', 'MEMBER'
+ * Allowed roles: 'SUPERADMIN', 'ADMIN', 'SUBADMIN', 'STAFF', 'MEMBER'
  */
 export const requireRoles = (...allowedRoles) => {
   return (req, res, next) => {
@@ -70,19 +82,27 @@ export const requireRoles = (...allowedRoles) => {
       return res.status(401).json({ message: "Authentication required." });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: `Forbidden. Requires one of the following roles: ${allowedRoles.join(", ")}`,
-      });
+    const userRole = (req.user.role || "MEMBER").toUpperCase();
+    const allowed = allowedRoles.map((r) => r.toUpperCase());
+
+    // Both SUPERADMIN and ADMIN satisfy super admin requirements
+    const isSuperAdminAuthorized =
+      (allowed.includes("SUPERADMIN") || allowed.includes("ADMIN")) &&
+      isSuperAdminRole(userRole);
+
+    if (allowed.includes(userRole) || isSuperAdminAuthorized) {
+      return next();
     }
 
-    next();
+    return res.status(403).json({
+      message: `Forbidden. Requires one of the following roles: ${allowedRoles.join(", ")}`,
+    });
   };
 };
 
 /**
  * Module Access Control Middleware:
- * - Admin can see and manage all modules.
+ * - Super Admin can see and manage all modules.
  * - Sub-admin can only access data belonging to their assigned module (e.g., 'staff', 'sports').
  * - Members have access if explicitly allowed or handled per module logic.
  */
@@ -92,8 +112,8 @@ export const authorizeModule = (requiredModule) => {
       return res.status(401).json({ message: "Authentication required." });
     }
 
-    // Admin has full access to all modules
-    if (req.user.role === "ADMIN") {
+    // Super Admin has full access to all modules
+    if (isSuperAdminRole(req.user.role)) {
       return next();
     }
 

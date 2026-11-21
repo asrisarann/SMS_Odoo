@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "node src/server.js",
     "build": "prisma generate",
-    "test": "node test-super-admin.js && node test-membership-expiry.js"
+    "test": "node test-super-admin.js && node test-membership-expiry.js && node test-user-roles.js"
   },
   "keywords": [],
   "author": "",

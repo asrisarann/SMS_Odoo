@@ -289,3 +289,48 @@ export const updateSportsConfig = async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 };
+
+/**
+ * GET /api/super-admin/verify
+ * Confirms that the caller is authenticated and holds verified super admin privileges.
+ */
+export const verifySuperAdminStatus = async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    isSuperAdmin: true,
+    user: {
+      id: req.user.id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+    },
+  });
+};
+
+/**
+ * PUT /api/super-admin/users/:id/role
+ * Assigns or updates a user's role (SUPERADMIN, ADMIN, SUBADMIN, STAFF, MEMBER).
+ */
+export const changeUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({
+        message: "Role is required (SUPERADMIN, ADMIN, SUBADMIN, STAFF, MEMBER)",
+      });
+    }
+
+    const updatedUser = await superAdminService.updateUserRole(id, role);
+    return res.status(200).json({
+      message: `User role updated successfully to '${updatedUser.role}'`,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Super Admin changeUserRole error:", error);
+    return res.status(error.statusCode || 400).json({
+      message: error.message,
+    });
+  }
+};

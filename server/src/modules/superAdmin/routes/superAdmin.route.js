@@ -14,13 +14,21 @@ import {
   updateSportsPricing,
   getSportsConfig,
   updateSportsConfig,
+  verifySuperAdminStatus,
+  changeUserRole,
 } from "../controllers/superAdmin.controller.js";
 import { authenticate, requireRoles } from "../../../common/middlewares/auth.middleware.js";
 
 const router = Router();
 
-// All super admin routes require authentication and ADMIN role
-// router.use(authenticate, requireRoles("ADMIN"));
+// All super admin routes require authentication and SUPERADMIN / ADMIN role
+router.use(authenticate, requireRoles("SUPERADMIN", "ADMIN"));
+
+// Super admin status verification
+router.get("/verify", verifySuperAdminStatus);
+
+// User role management (assign SUPERADMIN, ADMIN, SUBADMIN, STAFF, MEMBER)
+router.put("/users/:id/role", changeUserRole);
 
 // Multi-module system overview and statistics
 router.get("/overview", getOverview);

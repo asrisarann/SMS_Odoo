@@ -215,6 +215,7 @@ export const getDatabaseOverview = async () => {
   let usersOverview = {
     total: counts.User || 0,
     byMembership: { GOLD: 0, SILVER: 0, JUNIOR: 0 },
+    byRole: { SUPERADMIN: 0, ADMIN: 0, SUBADMIN: 0, STAFF: 0, MEMBER: 0 },
     totalBalance: "0.00",
   };
   try {
@@ -224,6 +225,15 @@ export const getDatabaseOverview = async () => {
     });
     for (const stat of membershipStats) {
       usersOverview.byMembership[stat.membership] = stat._count._all;
+    }
+    const roleStats = await prisma.user.groupBy({
+      by: ["role"],
+      _count: { _all: true },
+    });
+    for (const stat of roleStats) {
+      if (stat.role) {
+        usersOverview.byRole[stat.role] = stat._count._all;
+      }
     }
     const balanceAgg = await prisma.user.aggregate({
       _sum: { amount: true },
@@ -680,4 +690,52 @@ export const updateSubAdminModule = async (staffId, moduleName) => {
   });
 
   return updated;
+};
+
+/**
+ * ASSIGN OR UPDATE USER ROLE:
+ * Allows super admin to assign any role (SUPERADMIN, ADMIN, SUBADMIN, STAFF, MEMBER) to a user.
+ */
+export const updateUserRole = async (userId, newRole) => {
+  const allowedRoles = ["SUPERADMIN", "ADMIN", "SUBADMIN", "STAFF", "MEMBER"];
+  const cleanRole = (newRole || "").trim().toUpperCase();
+
+  if (!allowedRoles.includes(cleanRole)) {
+    const error = new Error(`Invalid role '${newRole}'. Allowed roles: ${allowedRoles.join(", ")}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existingUser) {
+    const error = new Error(`User with id '${userId}' not found`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { role: cleanRole },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      membership: true,
+    },
+  });
+
+  // If role is set to SUBADMIN or STAFF, sync role on Staff table if matching record exists
+  if (cleanRole === "SUBADMIN" || cleanRole === "STAFF") {
+    const existingStaff = await prisma.staff.findUnique({ where: { email: updatedUser.email } });
+    if (existingStaff) {
+      await prisma.staff.update({
+        where: { id: existingStaff.id },
+        data: { role: cleanRole },
+      });
+    }
+  }
+
+  return updatedUser;
 };
