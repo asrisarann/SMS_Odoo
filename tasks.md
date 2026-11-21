@@ -37,20 +37,24 @@
   - Create `sportsShop.service.js`
   - Wire route into `server/src/app.js` (`/api/shop`)
 
-- [ ] **Task 4: Product Catalog API (Read & Manage Stock)**
-  - Endpoint to get all products with category filtering.
-  - Automatic low-stock identification (`inStock <= 5`).
-  - Endpoint to update/add product stock.
+- [x] **Task 4: Product Catalog API (Read & Manage Stock)**
+  - Endpoint to get all products with category filtering (`GET /api/shop/products`).
+  - Automatic low-stock identification (`isLowStock: inStock <= 5`).
+  - Endpoint to fetch single product (`GET /api/shop/products/:id`).
+  - Endpoint to create products (`POST /api/shop/products`).
+  - Endpoint to update/add stock quantity (`PATCH /api/shop/products/:id/stock`).
 
-- [ ] **Task 5: Member Purchase & Checkout Flow**
+- [x] **Task 5: Member Purchase & Checkout Flow**
   - Fetch member tier from `User` table (Gold: 30%, Silver: 15%, Junior/None: 0%).
   - Validate and verify pricing on server (never trust client amounts).
-  - Atomic stock deduction (prevent overselling / race conditions).
+  - Atomic stock deduction inside `prisma.$transaction`.
   - Create `SportShopPurchase` and corresponding `SportShopOrderItem` records in a Prisma transaction.
+  - Endpoint: `POST /api/shop/checkout`.
 
-- [ ] **Task 6: Order Management & Cancellation**
-  - List user purchases.
-  - Cancel order before "READY" status, automatically restoring stock to `Product`.
+- [x] **Task 6: Order Management & Cancellation**
+  - List user purchases (`GET /api/shop/orders/user/:userId`).
+  - List all shop purchases for admin dashboard (`GET /api/shop/orders`).
+  - Cancel order before "READY" status (`POST /api/shop/orders/:id/cancel`), automatically restoring stock to `Product`.
 
 - [ ] **Task 7: Rental System (Deferred to Final Phase)**
   - Implement deposit, due date, return processing, and overdue late fees.
