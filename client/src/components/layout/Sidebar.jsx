@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [pagesOpen, setPagesOpen] = useState(false);
+  const [morePagesOpen, setMorePagesOpen] = useState(false);
 
   return (
     <aside>
@@ -39,58 +38,34 @@ export default function Sidebar({ isOpen, onClose }) {
               </Link>
             </li>
             <li>
+              <Link to="/booking" onClick={onClose}>
+                Book Court
+              </Link>
+            </li>
+            <li>
               <Link to="/about" onClick={onClose}>
                 About Us
               </Link>
             </li>
-
-            {/* Booking Court Dropdown */}
-            <li className="sidebar-dropdown">
-              <div
-                className="dropdown-header d-flex justify-content-between align-items-center cursor-pointer"
-                onClick={() => setBookingOpen(!bookingOpen)}
-              >
-                <span>Booking Court</span>
-                <button
-                  type="button"
-                  className="sidebar-dropdown-btn bg-transparent border-0"
-                  aria-label="Toggle booking menu"
-                >
-                  <i
-                    className={`fa-solid fa-angle-down transition-transform duration-200 ${
-                      bookingOpen ? 'rotate-180' : ''
-                    }`}
-                  ></i>
-                </button>
-              </div>
-              {bookingOpen && (
-                <ul className="sidebar-dropdown-menu ps-4 pt-2">
-                  <li className="py-1">
-                    <Link to="/booking" onClick={onClose}>
-                      Booking Court
-                    </Link>
-                  </li>
-                  <li className="py-1">
-                    <Link to="/event" onClick={onClose}>
-                      Event
-                    </Link>
-                  </li>
-                  <li className="py-1">
-                    <Link to="/membership" onClick={onClose}>
-                      Membership
-                    </Link>
-                  </li>
-                </ul>
-              )}
+            <li>
+              <Link to="/contact" onClick={onClose}>
+                Contact Us
+              </Link>
+            </li>
+            <li>
+              <Link to="/login" onClick={onClose} className="text-[#000000] font-bold">
+                <i className="fa-regular fa-user mr-2 text-[#C6EF2E]"></i>
+                Login / Register
+              </Link>
             </li>
 
-            {/* Pages Dropdown */}
+            {/* More Pages Dropdown */}
             <li className="sidebar-dropdown">
               <div
                 className="dropdown-header d-flex justify-content-between align-items-center cursor-pointer"
-                onClick={() => setPagesOpen(!pagesOpen)}
+                onClick={() => setMorePagesOpen(!morePagesOpen)}
               >
-                <span>Pages</span>
+                <span>More Pages</span>
                 <button
                   type="button"
                   className="sidebar-dropdown-btn bg-transparent border-0"
@@ -98,12 +73,12 @@ export default function Sidebar({ isOpen, onClose }) {
                 >
                   <i
                     className={`fa-solid fa-angle-down transition-transform duration-200 ${
-                      pagesOpen ? 'rotate-180' : ''
+                      morePagesOpen ? 'rotate-180' : ''
                     }`}
                   ></i>
                 </button>
               </div>
-              {pagesOpen && (
+              {morePagesOpen && (
                 <ul className="sidebar-dropdown-menu ps-4 pt-2">
                   <li className="py-1">
                     <Link to="/service" onClick={onClose}>
@@ -111,8 +86,18 @@ export default function Sidebar({ isOpen, onClose }) {
                     </Link>
                   </li>
                   <li className="py-1">
+                    <Link to="/event" onClick={onClose}>
+                      Tournaments & Events
+                    </Link>
+                  </li>
+                  <li className="py-1">
+                    <Link to="/membership" onClick={onClose}>
+                      Membership
+                    </Link>
+                  </li>
+                  <li className="py-1">
                     <Link to="/coaching" onClick={onClose}>
-                      Coaching
+                      Coaching & Academy
                     </Link>
                   </li>
                   <li className="py-1">
@@ -133,21 +118,25 @@ export default function Sidebar({ isOpen, onClose }) {
                 </ul>
               )}
             </li>
-
-            <li className="below-dropdown">
-              <Link to="/contact" onClick={onClose}>
-                Contact Us
-              </Link>
-            </li>
           </ul>
 
-          <div className="p-3 mt-4">
+          <div className="p-3 mt-4 d-flex flex-column gap-2">
             <Link
               to="/booking"
               onClick={onClose}
               className="btn btn-accent w-100 justify-content-center text-center"
             >
               <span className="btn-title">Book a Court</span>
+              <span className="icon-circle">
+                <i className="fa-solid fa-arrow-right"></i>
+              </span>
+            </Link>
+            <Link
+              to="/login"
+              onClick={onClose}
+              className="btn btn-accent bg-accent-color-6 w-100 justify-content-center text-center"
+            >
+              <span className="btn-title">Member Login</span>
               <span className="icon-circle">
                 <i className="fa-solid fa-arrow-right"></i>
               </span>

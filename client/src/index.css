@@ -73,6 +73,170 @@ a {
 /* Premium Hover & Micro-interaction Enhancements                             */
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+/* Premium Navbar Button Navigation System (Expanded Width)                  */
+/* -------------------------------------------------------------------------- */
+
+.navbar-container {
+  padding: 30px 24px 0px 24px !important;
+  margin-top: 20px;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.navbar-hero-container {
+  max-width: 1560px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.navbar {
+  width: 100% !important;
+}
+
+.navbar-nav-container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 12px 28px !important;
+  gap: 16px !important;
+}
+
+.navbar .logo-container {
+  width: auto !important;
+  min-width: 160px !important;
+  max-width: 220px !important;
+  flex-shrink: 0 !important;
+}
+
+.navbar .nav-link-container {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: auto !important;
+  flex: 1 1 auto !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.navbar-nav-links {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+  flex-wrap: nowrap !important;
+}
+
+.nav-link-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: var(--font-family-1) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  color: #ffffff !important;
+  padding: 9px 18px !important;
+  border-radius: 9999px !important;
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+}
+
+.nav-link-btn:hover {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #C6EF2E !important;
+  border-color: rgba(198, 239, 46, 0.3) !important;
+  transform: translateY(-2px);
+}
+
+.nav-link-btn.active {
+  color: #000000 !important;
+  background-color: #C6EF2E !important;
+  border-color: #C6EF2E !important;
+  box-shadow: 0 4px 18px rgba(198, 239, 46, 0.4) !important;
+}
+
+.navbar-cta-container {
+  width: auto !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.navbar-cta-container .btn-accent {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.navbar-cta-container .btn-title {
+  white-space: nowrap !important;
+  display: inline-block !important;
+  padding: 12px 18px !important;
+}
+
+.btn-auth-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: var(--font-family-1) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  padding: 9px 16px !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 250ms ease !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.btn-auth-nav:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-color: #C6EF2E !important;
+  color: #C6EF2E !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 15px rgba(198, 239, 46, 0.2) !important;
+}
+
+.navbar .navbar-cta-container {
+  display: flex !important;
+  align-items: center !important;
+}
+
+@media screen and (max-width: 1080px) {
+  .navbar .nav-link-container {
+    display: none !important;
+  }
+  .navbar .nav-btn {
+    display: block !important;
+  }
+}
+
+@media screen and (min-width: 1081px) {
+  .navbar .nav-link-container {
+    display: flex !important;
+  }
+  .navbar .nav-btn {
+    display: none !important;
+  }
+}
+
 /* Button Hover Transitions & Glows */
 .btn {
   transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 300ms ease, background-color 300ms ease;
