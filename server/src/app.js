@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import prisma from "./config/prisma.js";
+import frontDeskRouter from "./modules/front-desk/index.js";
 
 const app = express();
 
@@ -28,5 +29,10 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+
+// Front Desk module routes
+app.use("/api/front-desk", frontDeskRouter);
+app.use("/api", frontDeskRouter);
+app.use(frontDeskRouter);
 
 export default app;
