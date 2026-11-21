@@ -227,7 +227,7 @@ export default function AuthPage({ initialMode = 'login' }) {
 
                       <div className="form-group">
                         <label className="text-xs uppercase tracking-wider text-gray-300 font-bold mb-1.5 d-block">
-                          Email Address
+                          Phone Number
                         </label>
                         <div className="position-relative">
                           <input
@@ -240,7 +240,8 @@ export default function AuthPage({ initialMode = 'login' }) {
                           />
                         </div>
                       </div>
-
+                     
+                     
                       <div className="form-group">
                         <div className="d-flex justify-content-between align-items-center mb-1.5">
                           <label className="text-xs uppercase tracking-wider text-gray-300 font-bold mb-0">

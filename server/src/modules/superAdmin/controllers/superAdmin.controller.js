@@ -1,4 +1,5 @@
 import * as superAdminService from "../services/superAdmin.service.js";
+import { getAllSportPricing, updateSportPricing } from "../../sports/services/pricing.service.js";
 
 /**
  * GET /api/super-admin/overview
@@ -187,5 +188,104 @@ export const updateSubAdminModule = async (req, res) => {
     return res.status(error.statusCode || 400).json({
       message: error.message,
     });
+  }
+};
+
+/**
+ * GET /sports/pricing
+ * Super Admin: Get all sport pricing configurations.
+ */
+export const getSportsPricing = async (req, res) => {
+  try {
+    const pricing = await getAllSportPricing();
+    return res.status(200).json({ pricing });
+  } catch (error) {
+    console.error("Super Admin get sports pricing error:", error);
+    return res.status(500).json({ message: "Failed to retrieve pricing", error: error.message });
+  }
+};
+
+/**
+ * PUT /sports/pricing
+ * Super Admin: Update pricing and discounts for a sport.
+ */
+export const updateSportsPricing = async (req, res) => {
+  try {
+    const { sport, basePrice, goldDiscount, silverDiscount, juniorDiscount } = req.body;
+
+    if (!sport) {
+      return res.status(400).json({ message: "Sport is required" });
+    }
+
+    const updated = await updateSportPricing(sport, {
+      basePrice,
+      goldDiscount,
+      silverDiscount,
+      juniorDiscount,
+    });
+
+    return res.status(200).json({
+      message: `Pricing for ${sport} updated successfully`,
+      pricing: updated,
+    });
+  } catch (error) {
+    console.error("Super Admin update sports pricing error:", error);
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+/**
+ * GET /sports/config
+ * Super Admin: Get operating hours and court capacities.
+ */
+export const getSportsConfig = async (req, res) => {
+  try {
+    const configs = await getAllSportPricing();
+    const result = configs.map((c) => ({
+      sport: c.sport,
+      capacity: c.capacity,
+      openTime: c.openTime,
+      closeTime: c.closeTime,
+      isActive: c.isActive,
+    }));
+    return res.status(200).json({ configs: result });
+  } catch (error) {
+    console.error("Super Admin get sports config error:", error);
+    return res.status(500).json({ message: "Failed to retrieve config", error: error.message });
+  }
+};
+
+/**
+ * PUT /sports/config
+ * Super Admin: Update operating hours and court capacity for a sport.
+ */
+export const updateSportsConfig = async (req, res) => {
+  try {
+    const { sport, capacity, openTime, closeTime, isActive } = req.body;
+
+    if (!sport) {
+      return res.status(400).json({ message: "Sport is required" });
+    }
+
+    const updated = await updateSportPricing(sport, {
+      capacity,
+      openTime,
+      closeTime,
+      isActive,
+    });
+
+    return res.status(200).json({
+      message: `Configuration for ${sport} updated successfully`,
+      config: {
+        sport: updated.sport,
+        capacity: updated.capacity,
+        openTime: updated.openTime,
+        closeTime: updated.closeTime,
+        isActive: updated.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("Super Admin update sports config error:", error);
+    return res.status(400).json({ message: error.message });
   }
 };

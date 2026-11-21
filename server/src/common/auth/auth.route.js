@@ -26,7 +26,7 @@ router.post("/register", register);
 router.post("/verify-register", verifyRegisterOtp);
 
 // Login endpoints
-router.post("/login", login);
+router.post("/login" , authenticate ,   login);
 router.post("/verify-login", verifyLoginOtp);
 
 // Password recovery endpoints

@@ -13,21 +13,78 @@ export const DEFAULT_SPORTS = [
 /**
  * Ensure default sport pricing records exist in database.
  */
-export const ensureSportPricingDefaults = async () => {
-  for (const item of DEFAULT_SPORTS) {
+export const ensureSportPricingDefaults111 = async (count = 0 ) => {
+  // for (const item of DEFAULT_SPORTS) {
+  //   await prisma.sportPricing.upsert({
+  //     where: { sport: item.sport },
+  //     update: {},
+  //     create: item,
+  //   });
+  // }
+  // let count = -1 ;
+  // let len = DEFAULT_SPORTS.length
+  // while(count < len){
+  //   let item = DEFAULT_SPORTS[count]
+  //     await prisma.sportPricing.upsert({
+  //     where: { sport: item.sport },
+  //     update: {},
+  //     create: item,
+  //   });
+  //   count++;
+    
+  // }
+  // do{
+  //     count++;
+  //     let item = DEFAULT_SPORTS[count]
+  //     await prisma.sportPricing.upsert({
+  //     where: { sport: item.sport },
+  //     update: {},
+  //     create: item,
+  //   });
+
+  // }while(count  < len - 1 )
+  // if(count  == len){
+  //   return;
+  // }else{
+  //       //  count++;
+  //     let item = DEFAULT_SPORTS[count]
+  //     await prisma.sportPricing.upsert({
+  //     where: { sport: item.sport },
+  //     update: {},
+  //     create: item,
+  //     })
+
+  // }
+  // ensureSportPricingDefaults(count + 1)
+  // console.log(count)
+};
+
+
+class MyClass{
+
+  MyClass(){}
+  async ensureSportPricingDefaults (){
+    
+    for (let i = 0 ; i < count ; i++) {
     await prisma.sportPricing.upsert({
       where: { sport: item.sport },
       update: {},
       create: item,
     });
   }
-};
+
+  }
+
+}
+
+
 
 /**
  * Retrieve all active sport pricing and configurations.
  */
 export const getAllSportPricing = async () => {
-  await ensureSportPricingDefaults();
+
+  await MyClass.ensureSportPricingDefaults;
   return prisma.sportPricing.findMany({
     orderBy: { sport: "asc" },
   });

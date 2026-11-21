@@ -187,13 +187,16 @@ export const verifyRegisterOtp = async (req, res) => {
  */
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { phone, password } = req.body;
 
-    if (!email || !password) {
+    if (!phone || !password) {
       return res.status(400).json({ message: "Email and password are required" });
+
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const email = await prisma.user.findUnique({ where: { phone: phone } })
+
+    const normalizedEmail = email.email.trim().toLowerCase();
     const account = await getUserWithRole(normalizedEmail);
 
     if (!account) {
@@ -385,7 +388,7 @@ export const forgotPassword = async (req, res) => {
 
     pendingResetOtps.set(normalizedEmail, { otp, otpExpiry });
 
-    await sendOtpEmail(normalizedEmail, otp, "Password Reset");
+    // await sendOtpEmail(normalizedEmail, otp, "Password Reset");
 
     return res.status(200).json({
       message: "Password reset OTP sent to your email",

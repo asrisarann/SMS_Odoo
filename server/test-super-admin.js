@@ -191,6 +191,17 @@ async function runSuperAdminTests() {
     assert.strictEqual(pricingData.status, 200);
     console.log("✔ Query /data/sport-pricing successfully accessed");
 
+    // Test Dedicated Sports Pricing & Config Endpoints in SuperAdmin
+    const sportsPricingRes = await request("/api/super-admin/sports/pricing", { token: adminToken });
+    assert.strictEqual(sportsPricingRes.status, 200);
+    assert.ok(Array.isArray(sportsPricingRes.data.pricing));
+    console.log("✔ GET /api/super-admin/sports/pricing successfully handled by superAdmin");
+
+    const sportsConfigRes = await request("/api/admin/sports/config", { token: adminToken });
+    assert.strictEqual(sportsConfigRes.status, 200);
+    assert.ok(Array.isArray(sportsConfigRes.data.configs));
+    console.log("✔ GET /api/admin/sports/config successfully handled by superAdmin");
+
     // Query Staff
     const staffData = await request("/api/super-admin/data/staff", { token: adminToken });
     assert.strictEqual(staffData.status, 200);

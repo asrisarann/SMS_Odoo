@@ -15,12 +15,16 @@ export const authenticate = async (req, res, next) => {
     if (!token && req.headers.authorization?.startsWith("Bearer ")) {
       token = req.headers.authorization.split(" ")[1];
     }
-
+    
     if (!token) {
       return res.status(401).json({ message: "Authentication required. Please login." });
     }
-
+    
     const decoded = jwt.verify(token, JWT_SECRET);
+    debugger;
+    res.send(decoded) ;
+
+
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },

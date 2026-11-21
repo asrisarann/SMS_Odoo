@@ -87,7 +87,7 @@ export default function Navbar({ onOpenSidebar }) {
                     <span>Login</span>
                   </Link>
                   <Link to="/membership" className="btn btn-accent">
-                    <span className="btn-title">Join The Club</span>
+                    <span className="btn-title">Join The Club2</span>
                     <span className="icon-circle">
                       <i className="fa-solid fa-arrow-right"></i>
                     </span>
