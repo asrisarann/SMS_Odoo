@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import prisma from "./config/prisma.js";
 import authRoutes from "./common/auth/auth.route.js";
 import sportsRoutes from "./modules/sports/routes/sports.route.js";
@@ -8,6 +10,9 @@ import bookingRoutes from "./modules/sports/routes/booking.route.js";
 import adminSportsRoutes from "./modules/sports/routes/admin.route.js";
 import { superAdminRoutes } from "./modules/superAdmin/index.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -20,6 +25,11 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve Interactive HTML API Documentation
+app.get(["/api/docs", "/docs"], (req, res) => {
+  res.sendFile(path.resolve(__dirname, "../../api-docs.html"));
+});
 
 // Health and DB connectivity check endpoint
 app.get("/api/health", async (req, res) => {

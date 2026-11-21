@@ -1,111 +1,292 @@
+@import "tailwindcss";
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --primary: #272727;
+  --secondary: #FFFFFF;
+  --text-color: #5F5F5F;
+  --accent-color: #000000;
+  --accent-color-2: #C6EF2E;
+  --accent-color-3: #F2F2F2;
+  --accent-color-4: #FAFAFA;
+  --accent-color-5: #E4E4E4;
+  --accent-color-6: #EAFF9D;
+  --accent-color-7: #D0D0D0;
+  --accent-color-8: #C9C1C1;
+  --accent-color-9: #8C8C8C14;
+  --accent-transparent-white: #FFFFFF00;
+  --accent-transparent-white-2: #FFFFFF14;
+  --accent-transparent-black: #0000005C;
+  --accent-transparent-black-2: #00000087;
+  --font-family-1: 'Montserrat', sans-serif;
+  --font-family-2: 'Lato', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+html {
+  scroll-behavior: smooth;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+  font-family: var(--font-family-2);
+  color: var(--primary);
+  background-color: #ffffff;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Ensure smooth image rendering */
+img {
+  max-width: 100%;
+  display: block;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+a {
+  text-decoration: none;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+::-webkit-scrollbar-thumb {
+  background: #C6EF2E;
   border-radius: 4px;
-  color: var(--text-h);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #EAFF9D;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* -------------------------------------------------------------------------- */
+/* Premium Hover & Micro-interaction Enhancements                             */
+/* -------------------------------------------------------------------------- */
+
+/* Button Hover Transitions & Glows */
+.btn {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 300ms ease, background-color 300ms ease;
+  will-change: transform, box-shadow;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: scale(0.97) translateY(0);
+}
+
+.btn-accent:hover {
+  box-shadow: 0 10px 25px -4px rgba(198, 239, 46, 0.45);
+}
+
+.btn .icon-circle {
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1), background-color 300ms ease;
+}
+
+.btn:hover .icon-circle {
+  transform: translateX(3px) scale(1.05);
+}
+
+.btn:hover .icon-circle i {
+  transform: translateX(2px);
+  transition: transform 250ms ease;
+}
+
+/* Floating Badges Animation */
+@keyframes floatSlow {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatReverse {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.card-banner-reviewer {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.card.banner-home-community {
+  animation: floatReverse 6s ease-in-out infinite;
+}
+
+/* Card Hover Enhancements */
+.card-chooseus {
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 400ms ease, border-color 300ms ease;
+}
+
+.card-chooseus:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.12);
+}
+
+.card-chooseus .chooseus-icon img {
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-chooseus:hover .chooseus-icon img {
+  transform: scale(1.12) rotate(4deg);
+}
+
+.card-chooseus .chooseus-btn {
+  transition: transform 300ms ease;
+}
+
+.card-chooseus:hover .chooseus-btn .icon-circle {
+  background-color: var(--accent-color-2);
+  color: var(--accent-color);
+  transform: scale(1.1);
+}
+
+/* Service Card Hover Zoom */
+.card-service {
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 400ms ease;
+}
+
+.card-service:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.22);
+}
+
+.card-service .service-img {
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-service:hover .service-img {
+  transform: scale(1.08);
+}
+
+/* Tournament Card Hover */
+.card-tournament {
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 400ms ease;
+}
+
+.card-tournament:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.35);
+}
+
+.card-tournament .tournament-btn .icon-circle {
+  transition: transform 300ms ease, background-color 300ms ease;
+}
+
+.card-tournament:hover .tournament-btn .icon-circle {
+  transform: scale(1.12);
+}
+
+/* Pricing Card Hover */
+.card-pricing {
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 400ms ease, border-color 300ms ease;
+}
+
+.card-pricing:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -10px rgba(198, 239, 46, 0.22);
+  border: 1px solid var(--accent-color-2);
+}
+
+/* Blog Card Hover */
+.card-blog {
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 400ms ease;
+}
+
+.card-blog:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+}
+
+.card-blog .blog-image img {
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-blog:hover .blog-image img {
+  transform: scale(1.07);
+}
+
+.card-blog:hover .secondary-accent {
+  color: var(--accent-color-2);
+  transition: color 300ms ease;
+}
+
+/* Benefit Card Hover */
+.card-benefit {
+  transition: transform 300ms ease, box-shadow 300ms ease, background-color 300ms ease;
+}
+
+.card-benefit:hover {
+  transform: translateX(6px);
+  background-color: #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.card-benefit .benefit-number {
+  transition: transform 300ms ease, background-color 300ms ease;
+}
+
+.card-benefit:hover .benefit-number {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+/* Social Icon Hover */
+.social-icon {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), background-color 300ms ease, color 300ms ease;
+}
+
+.social-icon:hover {
+  transform: translateY(-3px) scale(1.1);
+  background-color: var(--accent-color-2);
+  color: var(--accent-color);
+}
+
+/* Tag Hover */
+.booking-tag, .tournament-tag, .cta-tag {
+  transition: transform 250ms ease, background-color 250ms ease, border-color 250ms ease;
+}
+
+.booking-tag:hover, .tournament-tag:hover, .cta-tag:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-color-2);
+}
+
+/* Animation utilities */
+@keyframes fadeInUpShort {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUpShort 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
