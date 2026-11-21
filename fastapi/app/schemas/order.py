@@ -27,6 +27,6 @@ class CafeOrderResponse(BaseModel):
     order_items: list[str]
     order_number: str
     date_time: datetime
-    subtotal: Decimal
-    discount_amount: Decimal
+    subtotal: Decimal | None = None
+    discount_amount: Decimal | None = None
     total_amount: Decimal

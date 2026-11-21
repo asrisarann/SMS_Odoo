@@ -33,8 +33,6 @@ def serialize_order(order: CafeOrder) -> CafeOrderResponse:
         order_items=list(order.orderItems or []),
         order_number=order.orderNumber,
         date_time=order.dateTime,
-        subtotal=subtotal,
-        discount_amount=Decimal("0.00"),
         total_amount=subtotal,
     )
 
