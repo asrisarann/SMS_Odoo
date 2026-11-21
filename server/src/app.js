@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import prisma from "./config/prisma.js";
+import sportsShopRouter from "./modules/sportsShop/sportsShop.routes.js";
 import authRoutes from "./common/auth/auth.route.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
 
@@ -16,6 +17,8 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/api/shop", sportsShopRouter);
 
 // Health and DB connectivity check endpoint
 app.get("/api/health", async (req, res) => {
