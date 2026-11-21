@@ -22,6 +22,11 @@ enum CourtType {
   PADEL_COURT
 }
 
+enum CallType {
+  INCOMING
+  OUTGOING
+}
+
 enum BookingStatus {
   HELD
   CONFIRMED
@@ -115,41 +120,99 @@ model CafeOrder {
   user        User     @relation(fields: [userID], references: [id])
 }
 
+model CafeMenuItem {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  price       Decimal  @db.Decimal(10, 2)
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ---------------- SPORT SHOP PURCHASE ----------------
 
 model SportShopPurchase {
-  id           String   @id @default(uuid())
-  userID       String
-  name         String
-  phone        String
-  items        String[]
-  purchaseDate DateTime @default(now())
-  totalAmount  Decimal  @db.Decimal(10, 2)
+  id              String               @id @default(uuid())
+  userID          String
+  name            String
+  phone           String
+  items           String[]
+  status          String               @default("PENDING")
+  fulfillmentType String               @default("PICKUP")
+  discount        Decimal              @default(0) @db.Decimal(10, 2)
+  purchaseDate    DateTime             @default(now())
+  totalAmount     Decimal              @db.Decimal(10, 2)
 
-  user         User     @relation(fields: [userID], references: [id])
+  user            User                 @relation(fields: [userID], references: [id])
+  orderItems      SportShopOrderItem[]
+}
+
+// ---------------- SPORT SHOP ORDER ITEM ----------------
+
+model SportShopOrderItem {
+  id         String            @id @default(uuid())
+  purchaseID String
+  productID  String
+  quantity   Int               @default(1)
+  unitPrice  Decimal           @db.Decimal(10, 2)
+  totalPrice Decimal           @db.Decimal(10, 2)
+
+  purchase   SportShopPurchase @relation(fields: [purchaseID], references: [id], onDelete: Cascade)
+  product    Product           @relation(fields: [productID], references: [id])
 }
 
 // ---------------- PRODUCT / STOCK ----------------
 
 model Product {
-  id        String   @id @default(uuid())
-  name      String
-  category  String
-  buyPrice  Decimal  @db.Decimal(10, 2)
-  rentPrice Decimal? @db.Decimal(10, 2)
-  size      String?
-  inStock   Int      @default(0)
+  id         String               @id @default(uuid())
+  name       String
+  category   String
+  buyPrice   Decimal              @db.Decimal(10, 2)
+  rentPrice  Decimal?             @db.Decimal(10, 2)
+  size       String?
+  inStock    Int                  @default(0)
+
+  orderItems SportShopOrderItem[]
 }
 
 // ---------------- STAFF ----------------
 
 model Staff {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
-  email       String   @unique
+  email       String          @unique
   phone       String
   role        String
   designation String?
-  salary      Decimal  @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
+  salary      Decimal         @db.Decimal(10, 2)
+  createdAt   DateTime        @default(now())
+  schedules   StaffSchedule[]
+}
+
+// ---------------- STAFF SCHEDULE ----------------
+
+model StaffSchedule {
+  id         String   @id @default(uuid())
+  staffId    String
+  shiftStart DateTime
+  shiftEnd   DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  staff      Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+// ---------------- CALL LOG ----------------
+
+model CallLog {
+  id         String   @id @default(uuid())
+  callerName String
+  phone      String
+  callType   CallType
+  purpose    String
+  notes      String?
+  callTime   DateTime @default(now())
+  createdAt  DateTime @default(now())
 }

@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import prisma from "./config/prisma.js";
+import sportsShopRouter from "./modules/sportsShop/sportsShop.routes.js";
 import authRoutes from "./common/auth/auth.route.js";
 import sportsRoutes from "./modules/sports/routes/sports.route.js";
 import bookingRoutes from "./modules/sports/routes/booking.route.js";
@@ -11,6 +12,7 @@ import adminSportsRoutes from "./modules/sports/routes/admin.route.js";
 import { superAdminRoutes } from "./modules/superAdmin/index.js";
 import { membershipRoutes } from "./modules/membership/index.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
+import frontDeskRouter from "./modules/front-desk/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +29,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/api/shop", sportsShopRouter);
 // Serve Interactive HTML API Documentation
 app.get(["/api/docs", "/docs"], (req, res) => {
   res.sendFile(path.resolve(__dirname, "../../api-docs.html"));
@@ -53,8 +56,9 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Authentication Routes
+// Auth routes (accessible via /api/auth or /auth)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
 
 // Sports & Court Booking Routes
 app.use("/api/sports", sportsRoutes);
@@ -84,5 +88,10 @@ app.get("/api/modules/sports", authenticate, authorizeModule("sports"), (req, re
     user: req.user,
   });
 });
+
+// Front Desk module routes
+app.use("/api/front-desk", frontDeskRouter);
+app.use("/api", frontDeskRouter);
+app.use(frontDeskRouter);
 
 export default app;

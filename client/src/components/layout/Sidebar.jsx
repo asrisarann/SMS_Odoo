@@ -53,6 +53,11 @@ export default function Sidebar({ isOpen, onClose }) {
               </Link>
             </li>
             <li>
+              <Link to="/front-desk" onClick={onClose}>
+                Front Desk Operations
+              </Link>
+            </li>
+            <li>
               <Link to="/login" onClick={onClose} className="text-[#000000] font-bold">
                 <i className="fa-regular fa-user mr-2 text-[#C6EF2E]"></i>
                 Login / Register
