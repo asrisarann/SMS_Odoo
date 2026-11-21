@@ -35,4 +35,17 @@
 - Used: HTML5, CSS3 Custom Properties, Vanilla JavaScript, Fetch API, Express `res.sendFile`.
 - Verification: Tested `GET /api/docs` returning 200 with `text/html`, verified full backend test suite (`npm --prefix server test` with 9/9 checks passing), and verified root `npm run build` cleanly passed.
 
+## 8. Guaranteed Navbar Buttons & Login / Register System
+- Implemented: Resolved viewport visibility by replacing fragile Bootstrap collapse wrappers with a bulletproof CSS flex button system for the core navigation buttons: "Home", "Book Court", "About Us", "Contact Us", and "Login / Register", styled with interactive rounded pills, active highlights (`#C6EF2E`), and smooth hover lifts. Added a secondary "Login" action button in the navbar header, updated the mobile sidebar with matching items, and implemented a complete high-fidelity Login / Register Page (`AuthPage.jsx`) accessible at `/login` and `/register` with tabbed Sign In / Create Account forms, password visibility toggles, skill level selector, validation, and feedback notifications.
+- Used: React Router DOM (`Link`, `useLocation`, `useNavigate`), custom CSS3 pill transitions, `AuthPage` component.
+- Verification: Clean ESLint run (`npm --prefix client run lint` with 0 errors and 0 warnings), client Vite build passed cleanly in 627ms, and root workspace build passed cleanly (`npm run build`).
+
+## 9. Expanded Navbar Width & Button Fitting Optimization
+- Implemented: Expanded navbar container layout to `max-width: 1560px` with optimized container horizontal padding (`24px`), dynamic flex distribution across logo, center nav buttons, and right action buttons, and enforced `white-space: nowrap` on buttons so that "Join The Club", "Login", and all navigation buttons fit cleanly on a single line with generous spacing and zero wrapping.
+- Used: CSS Flexbox dynamic layout, `navbar-hero-container`.
+- Verification: ESLint passed with 0 errors/warnings, `vite build` completed in 335ms, and root workspace build passed cleanly.
+
+
+
+
 
