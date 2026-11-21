@@ -39,4 +39,13 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// Auth routes (accessible via /api/auth or /auth)
+app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
+// Front Desk module routes
+app.use("/api/front-desk", frontDeskRouter);
+app.use("/api", frontDeskRouter);
+app.use(frontDeskRouter);
+
 export default app;
