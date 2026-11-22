@@ -13,78 +13,21 @@ export const DEFAULT_SPORTS = [
 /**
  * Ensure default sport pricing records exist in database.
  */
-export const ensureSportPricingDefaults111 = async (count = 0 ) => {
-  // for (const item of DEFAULT_SPORTS) {
-  //   await prisma.sportPricing.upsert({
-  //     where: { sport: item.sport },
-  //     update: {},
-  //     create: item,
-  //   });
-  // }
-  // let count = -1 ;
-  // let len = DEFAULT_SPORTS.length
-  // while(count < len){
-  //   let item = DEFAULT_SPORTS[count]
-  //     await prisma.sportPricing.upsert({
-  //     where: { sport: item.sport },
-  //     update: {},
-  //     create: item,
-  //   });
-  //   count++;
-    
-  // }
-  // do{
-  //     count++;
-  //     let item = DEFAULT_SPORTS[count]
-  //     await prisma.sportPricing.upsert({
-  //     where: { sport: item.sport },
-  //     update: {},
-  //     create: item,
-  //   });
-
-  // }while(count  < len - 1 )
-  // if(count  == len){
-  //   return;
-  // }else{
-  //       //  count++;
-  //     let item = DEFAULT_SPORTS[count]
-  //     await prisma.sportPricing.upsert({
-  //     where: { sport: item.sport },
-  //     update: {},
-  //     create: item,
-  //     })
-
-  // }
-  // ensureSportPricingDefaults(count + 1)
-  // console.log(count)
-};
-
-
-class MyClass{
-
-  MyClass(){}
-  async ensureSportPricingDefaults (){
-    
-    for (let i = 0 ; i < count ; i++) {
+export const ensureSportPricingDefaults = async () => {
+  for (const item of DEFAULT_SPORTS) {
     await prisma.sportPricing.upsert({
       where: { sport: item.sport },
       update: {},
       create: item,
     });
   }
-
-  }
-
-}
-
-
+};
 
 /**
  * Retrieve all active sport pricing and configurations.
  */
 export const getAllSportPricing = async () => {
-
-  await MyClass.ensureSportPricingDefaults;
+  await ensureSportPricingDefaults();
   return prisma.sportPricing.findMany({
     orderBy: { sport: "asc" },
   });
@@ -119,7 +62,7 @@ export const calculateBookingPrice = async (sport, membership, playerCount) => {
   const basePriceNum = Number(pricing.basePrice);
 
   let discountPercentage = 0;
-  const m = (membership || "JUNIOR").toUpperCase();
+  const m = (membership || "").toUpperCase();
 
   if (m === "GOLD") {
     discountPercentage = Number(pricing.goldDiscount);
@@ -127,10 +70,13 @@ export const calculateBookingPrice = async (sport, membership, playerCount) => {
     discountPercentage = Number(pricing.silverDiscount);
   } else if (m === "JUNIOR") {
     discountPercentage = Number(pricing.juniorDiscount);
+  } else {
+    // Non-member or walk-in without a membership plan pays full rate
+    discountPercentage = 0;
   }
 
   const rawTotal = playerCount * basePriceNum * (1 - discountPercentage / 100);
-  const totalAmount = Math.round(rawTotal * 100) / 100; // Round to 2 decimal places
+  const totalAmount = Math.max(0, Math.round(rawTotal * 100) / 100); // Round to 2 decimal places
 
   return {
     basePrice: basePriceNum,

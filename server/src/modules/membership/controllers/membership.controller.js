@@ -1,4 +1,118 @@
-import { findUsersExpiringSoon, processExpiringMemberships } from "../services/membership.service.js";
+import {
+  findUsersExpiringSoon,
+  processExpiringMemberships,
+  getMembershipPlans,
+  getMemberMembershipStatus,
+  renewMembership,
+  upgradeMembership,
+} from "../services/membership.service.js";
+
+/**
+ * GET /api/membership/plans
+ * Returns list of official membership tiers, pricing, and perks.
+ */
+export const getMembershipPlansHandler = async (req, res) => {
+  try {
+    const plans = getMembershipPlans();
+    return res.status(200).json({
+      success: true,
+      plans,
+    });
+  } catch (error) {
+    console.error("getMembershipPlansHandler error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve membership plans",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/membership/status
+ * Returns current authenticated member's membership status, days remaining, active perks.
+ */
+export const getMembershipStatusHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    const data = await getMemberMembershipStatus(userId);
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("getMembershipStatusHandler error:", error);
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to retrieve membership status",
+    });
+  }
+};
+
+/**
+ * POST /api/membership/renew
+ * Renews current member's tier for +365 days, debits virtual card if selected.
+ */
+export const renewMembershipHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    const { paymentMethod = "VIRTUAL_CARD" } = req.body;
+    const result = await renewMembership({ userId, paymentMethod });
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    console.error("renewMembershipHandler error:", error);
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to renew membership",
+    });
+  }
+};
+
+/**
+ * POST /api/membership/upgrade
+ * Upgrades member tier to targetTier, debits prorated difference, resets expiry to +365 days.
+ */
+export const upgradeMembershipHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    const { targetTier, paymentMethod = "VIRTUAL_CARD" } = req.body;
+    if (!targetTier) {
+      return res.status(400).json({ success: false, message: "targetTier is required (GOLD, SILVER, JUNIOR)" });
+    }
+
+    const result = await upgradeMembership({ userId, targetTier, paymentMethod });
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    console.error("upgradeMembershipHandler error:", error);
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to upgrade membership",
+    });
+  }
+};
 
 /**
  * GET /api/membership/expiring

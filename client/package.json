@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "node test-api-client.js && node test-role-routing.js",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import PageBanner from '../components/common/PageBanner';
-import ScrollReveal from '../components/common/ScrollReveal';
 import api from '../services/api';
+import Member360Tab from '../components/front-desk/Member360Tab';
+import CrmLeadsTab from '../components/front-desk/CrmLeadsTab';
+import LeaveManagementTab from '../components/front-desk/LeaveManagementTab';
 
 export default function FrontDeskPage() {
-  const [activeTab, setActiveTab] = useState('daily'); // 'daily', 'walkins', 'calls', 'schedules'
+  const [activeTab, setActiveTab] = useState('member360'); // 'member360', 'daily', 'walkins', 'calls', 'schedules'
   const [alert, setAlert] = useState(null);
 
   // Helper to show dismissible alert
@@ -17,11 +19,9 @@ export default function FrontDeskPage() {
   // TAB 1: DAILY ACTIVITIES STATE & ACTIONS
   // -------------------------------------------------------------
   const [dailyData, setDailyData] = useState(null);
-  const [loadingDaily, setLoadingDaily] = useState(false);
   const [dailyDateFilter, setDailyDateFilter] = useState('');
 
   const fetchDailyActivities = async (date) => {
-    setLoadingDaily(true);
     try {
       const res = await api.dailyActivities.get(date || undefined);
       if (res.success) {
@@ -29,15 +29,25 @@ export default function FrontDeskPage() {
       }
     } catch (err) {
       showAlert('error', err.message || 'Failed to load daily activities');
-    } finally {
-      setLoadingDaily(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'daily') {
-      fetchDailyActivities(dailyDateFilter);
-    }
+    if (activeTab !== 'daily') return;
+    let isMounted = true;
+    Promise.resolve().then(async () => {
+      try {
+        const res = await api.dailyActivities.get(dailyDateFilter || undefined);
+        if (isMounted && res.success) {
+          setDailyData(res.data);
+        }
+      } catch (err) {
+        if (isMounted) showAlert('error', err.message || 'Failed to load daily activities');
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, [activeTab, dailyDateFilter]);
 
   // -------------------------------------------------------------
@@ -46,7 +56,6 @@ export default function FrontDeskPage() {
   const [walkins, setWalkins] = useState([]);
   const [walkinPagination, setWalkinPagination] = useState({ page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
   const [walkinStats, setWalkinStats] = useState(null);
-  const [loadingWalkins, setLoadingWalkins] = useState(false);
   const [walkinSearch, setWalkinSearch] = useState('');
   const [walkinMembership, setWalkinMembership] = useState('');
   const [walkinPhoneLookup, setWalkinPhoneLookup] = useState('');
@@ -60,7 +69,6 @@ export default function FrontDeskPage() {
   });
 
   const fetchWalkins = async (page = 1) => {
-    setLoadingWalkins(true);
     try {
       const [listRes, statsRes] = await Promise.all([
         api.walkins.getAll({
@@ -80,16 +88,40 @@ export default function FrontDeskPage() {
       }
     } catch (err) {
       showAlert('error', err.message || 'Failed to load walk-in records');
-    } finally {
-      setLoadingWalkins(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'walkins') {
-      fetchWalkins(1);
-    }
-  }, [activeTab, walkinMembership]);
+    if (activeTab !== 'walkins') return;
+    let isMounted = true;
+    Promise.resolve().then(async () => {
+      try {
+        const [listRes, statsRes] = await Promise.all([
+          api.walkins.getAll({
+            page: 1,
+            limit: 10,
+            search: walkinSearch,
+            membership: walkinMembership,
+          }),
+          api.walkins.getStats(),
+        ]);
+        if (isMounted) {
+          if (listRes.success) {
+            setWalkins(listRes.data || []);
+            setWalkinPagination(listRes.pagination || { page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
+          }
+          if (statsRes.success) {
+            setWalkinStats(statsRes.data);
+          }
+        }
+      } catch (err) {
+        if (isMounted) showAlert('error', err.message || 'Failed to load walk-in records');
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, walkinMembership, walkinSearch]);
 
   const handleRegisterWalkin = async (e) => {
     e.preventDefault();
@@ -122,7 +154,6 @@ export default function FrontDeskPage() {
   // -------------------------------------------------------------
   const [callLogs, setCallLogs] = useState([]);
   const [callPagination, setCallPagination] = useState({ page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
-  const [loadingCalls, setLoadingCalls] = useState(false);
   const [callSearch, setCallSearch] = useState('');
   const [callTypeFilter, setCallTypeFilter] = useState('');
 
@@ -135,7 +166,6 @@ export default function FrontDeskPage() {
   });
 
   const fetchCallLogs = async (page = 1) => {
-    setLoadingCalls(true);
     try {
       const res = await api.callLogs.getAll({
         page,
@@ -149,16 +179,32 @@ export default function FrontDeskPage() {
       }
     } catch (err) {
       showAlert('error', err.message || 'Failed to load call logs');
-    } finally {
-      setLoadingCalls(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'calls') {
-      fetchCallLogs(1);
-    }
-  }, [activeTab, callTypeFilter]);
+    if (activeTab !== 'calls') return;
+    let isMounted = true;
+    Promise.resolve().then(async () => {
+      try {
+        const res = await api.callLogs.getAll({
+          page: 1,
+          limit: 10,
+          search: callSearch,
+          callType: callTypeFilter,
+        });
+        if (isMounted && res.success) {
+          setCallLogs(res.data || []);
+          setCallPagination(res.pagination || { page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
+        }
+      } catch (err) {
+        if (isMounted) showAlert('error', err.message || 'Failed to load call logs');
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, callTypeFilter, callSearch]);
 
   const handleCreateCallLog = async (e) => {
     e.preventDefault();
@@ -177,7 +223,6 @@ export default function FrontDeskPage() {
   // -------------------------------------------------------------
   const [schedules, setSchedules] = useState([]);
   const [schedulePagination, setSchedulePagination] = useState({ page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
-  const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [scheduleDateFilter, setScheduleDateFilter] = useState('');
 
   const [newSchedule, setNewSchedule] = useState({
@@ -189,7 +234,6 @@ export default function FrontDeskPage() {
   });
 
   const fetchSchedules = async (page = 1) => {
-    setLoadingSchedules(true);
     try {
       const res = await api.schedules.getAll({
         page,
@@ -202,15 +246,30 @@ export default function FrontDeskPage() {
       }
     } catch (err) {
       showAlert('error', err.message || 'Failed to load staff schedules');
-    } finally {
-      setLoadingSchedules(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'schedules') {
-      fetchSchedules(1);
-    }
+    if (activeTab !== 'schedules') return;
+    let isMounted = true;
+    Promise.resolve().then(async () => {
+      try {
+        const res = await api.schedules.getAll({
+          page: 1,
+          limit: 10,
+          date: scheduleDateFilter,
+        });
+        if (isMounted && res.success) {
+          setSchedules(res.data || []);
+          setSchedulePagination(res.pagination || { page: 1, limit: 10, totalRecords: 0, totalPages: 1 });
+        }
+      } catch (err) {
+        if (isMounted) showAlert('error', err.message || 'Failed to load staff schedules');
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, [activeTab, scheduleDateFilter]);
 
   const handleCreateSchedule = async (e) => {
@@ -250,7 +309,7 @@ export default function FrontDeskPage() {
   };
 
   return (
-    <main>
+    <main className="bg-[#0e0f0f] text-gray-100 min-h-screen">
       {/* Page Banner */}
       <PageBanner
         title="Front Desk Management"
@@ -286,6 +345,30 @@ export default function FrontDeskPage() {
           {/* Module Navigation Tabs */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-[#181818] p-2 rounded-2xl border border-gray-800">
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('member360')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all border-0 cursor-pointer flex items-center gap-2 ${
+                  activeTab === 'member360'
+                    ? 'bg-[#C6EF2E] text-black shadow-md'
+                    : 'text-gray-300 hover:text-white bg-[#222222]'
+                }`}
+              >
+                <i className="fa-solid fa-address-card"></i>
+                Member 360
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('crm')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all border-0 cursor-pointer flex items-center gap-2 ${
+                  activeTab === 'crm'
+                    ? 'bg-[#C6EF2E] text-black shadow-md'
+                    : 'text-gray-300 hover:text-white bg-[#222222]'
+                }`}
+              >
+                <i className="fa-solid fa-funnel-dollar"></i>
+                CRM Leads & Pipeline
+              </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('daily')}
@@ -334,6 +417,18 @@ export default function FrontDeskPage() {
                 <i className="fa-solid fa-calendar-days"></i>
                 Staff Schedules
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('leaves')}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all border-0 cursor-pointer flex items-center gap-2 ${
+                  activeTab === 'leaves'
+                    ? 'bg-[#C6EF2E] text-black shadow-md'
+                    : 'text-gray-300 hover:text-white bg-[#222222]'
+                }`}
+              >
+                <i className="fa-solid fa-umbrella-beach"></i>
+                Leaves & HR
+              </button>
             </div>
 
             <div className="flex items-center gap-2 pr-2">
@@ -341,6 +436,27 @@ export default function FrontDeskPage() {
               <span className="text-xs text-gray-400 font-mono">Backend Connected (5000)</span>
             </div>
           </div>
+
+          {/* -------------------------------------------------------- */}
+          {/* TAB 0: MEMBER 360 RECOGNITION & HISTORY (SCENE 1)        */}
+          {/* -------------------------------------------------------- */}
+          {activeTab === 'member360' && (
+            <Member360Tab showAlert={showAlert} />
+          )}
+
+          {/* -------------------------------------------------------- */}
+          {/* TAB 0.5: CRM LEADS & PIPELINE (SCENE 2)                  */}
+          {/* -------------------------------------------------------- */}
+          {activeTab === 'crm' && (
+            <CrmLeadsTab showAlert={showAlert} />
+          )}
+
+          {/* -------------------------------------------------------- */}
+          {/* TAB 0.8: STAFF LEAVES & HR APPROVALS (SCENE 4)           */}
+          {/* -------------------------------------------------------- */}
+          {activeTab === 'leaves' && (
+            <LeaveManagementTab showAlert={showAlert} />
+          )}
 
           {/* -------------------------------------------------------- */}
           {/* TAB 1: DAILY ACTIVITIES OVERVIEW                         */}

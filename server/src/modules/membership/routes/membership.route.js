@@ -1,9 +1,25 @@
 import { Router } from "express";
-import { getExpiringMembers, triggerExpiryCheck } from "../controllers/membership.controller.js";
+import {
+  getExpiringMembers,
+  triggerExpiryCheck,
+  getMembershipPlansHandler,
+  getMembershipStatusHandler,
+  renewMembershipHandler,
+  upgradeMembershipHandler,
+} from "../controllers/membership.controller.js";
 import { authenticate, requireRoles } from "../../../common/middlewares/auth.middleware.js";
 
 const router = Router();
 
+// Public plans reference
+router.get("/plans", getMembershipPlansHandler);
+
+// Member self-service endpoints
+router.get("/status", authenticate, getMembershipStatusHandler);
+router.post("/renew", authenticate, renewMembershipHandler);
+router.post("/upgrade", authenticate, upgradeMembershipHandler);
+
+// Staff / Admin endpoints
 // Retrieve members whose membership is expiring in 2 days (or ?days=X)
 router.get("/expiring", authenticate, requireRoles("ADMIN", "SUBADMIN"), getExpiringMembers);
 

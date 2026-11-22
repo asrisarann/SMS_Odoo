@@ -76,7 +76,27 @@ export const createSchedule = async ({ staffId, shiftStart, shiftEnd, notes }) =
     throw error;
   }
 
-  // 3. Persist new schedule record
+  // 3. Validate staff member is not on approved leave during this shift
+  if (prisma.staffLeave) {
+    const onLeave = await prisma.staffLeave.findFirst({
+      where: {
+        staffId,
+        status: "APPROVED",
+        startDate: { lte: new Date(shiftEnd) },
+        endDate: { gte: new Date(shiftStart) },
+      },
+    });
+
+    if (onLeave) {
+      const error = new Error(
+        `Cannot schedule shift: Staff member is on approved ${onLeave.leaveType} leave during this time.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
+  // 4. Persist new schedule record
   return await delegate.create({
     data: {
       staffId,

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageBanner from '../components/common/PageBanner';
 import ScrollReveal from '../components/common/ScrollReveal';
 import api from '../services/api';
+import { getDashboardRoute } from '../utils/roleRedirect';
 
 export default function AuthPage({ initialMode = 'login' }) {
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
@@ -40,13 +41,15 @@ export default function AuthPage({ initialMode = 'login' }) {
       });
 
       setLoading(false);
+      const targetRoute = getDashboardRoute(res.user);
+      const roleDisplay = res.user?.role || 'Member';
       setStatusMessage({
         type: 'success',
-        text: res.message || 'Login successful! Welcome back to Adelux Padel Club.',
+        text: res.message || `Login successful! Welcome back (${roleDisplay}). Redirecting...`,
       });
       setTimeout(() => {
-        navigate('/front-desk');
-      }, 1000);
+        navigate(targetRoute);
+      }, 700);
     } catch (err) {
       setLoading(false);
       setStatusMessage({
@@ -79,13 +82,14 @@ export default function AuthPage({ initialMode = 'login' }) {
       });
 
       setLoading(false);
+      const targetRoute = getDashboardRoute(res.user);
       setStatusMessage({
         type: 'success',
         text: res.message || 'Account created successfully! Welcome to the Adelux community.',
       });
       setTimeout(() => {
-        navigate('/front-desk');
-      }, 1000);
+        navigate(targetRoute);
+      }, 700);
     } catch (err) {
       setLoading(false);
       setStatusMessage({
@@ -96,7 +100,7 @@ export default function AuthPage({ initialMode = 'login' }) {
   };
 
   return (
-    <main>
+    <main className="bg-[#0e0f0f] text-gray-100 min-h-screen">
       <PageBanner
         title={mode === 'login' ? 'Member Sign In' : 'Create an Account'}
         current={mode === 'login' ? 'Login' : 'Register'}

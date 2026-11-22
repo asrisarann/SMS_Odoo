@@ -10,11 +10,27 @@ import {
 /**
  * POST /api/bookings/hold
  * Create a 3-minute temporary capacity hold.
+ * Supports:
+ * - 1-hour sessions (durationMinutes)
+ * - Max 2 plays/day member limit
+ * - Friday night social play
+ * - Walk-in counter bookings by staff/admin
  */
 export const createHold = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { sport, date, startTime, playerCount } = req.body;
+    const role = req.user.role;
+    const {
+      sport,
+      date,
+      startTime,
+      playerCount,
+      durationMinutes,
+      isWalkin,
+      walkinName,
+      walkinPhone,
+      walkinEmail,
+    } = req.body;
 
     const hold = await createBookingHold({
       userId,
@@ -22,6 +38,12 @@ export const createHold = async (req, res) => {
       date,
       startTime,
       playerCount,
+      durationMinutes,
+      isWalkin,
+      walkinName,
+      walkinPhone,
+      walkinEmail,
+      role,
     });
 
     return res.status(201).json({

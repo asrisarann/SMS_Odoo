@@ -42,6 +42,63 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  QUOTE_SENT
+  CONVERTED
+  CLOSED_LOST
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+  REFUND
+}
+
+enum PaymentMethod {
+  VIRTUAL_CARD
+  CASH
+  CARD
+  UPI
+  ONLINE
+}
+
+enum TransactionModule {
+  COURT
+  SHOP
+  CAFE
+  WALLET_TOPUP
+  MEMBERSHIP
+}
+
+enum LeaveType {
+  CASUAL
+  SICK
+  ANNUAL
+  EMERGENCY
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ServiceUrgency {
+  STANDARD
+  EMERGENCY_EXPRESS
+}
+
+enum ServiceStatus {
+  RECEIVED
+  IN_PROGRESS
+  READY_FOR_PICKUP
+  COLLECTED
+  CANCELLED
+}
+
 // ---------------- USER ----------------
 
 model User {
@@ -60,6 +117,8 @@ model User {
   sportsBookings SportsBooking[]
   cafeOrders     CafeOrder[]
   shopPurchases  SportShopPurchase[]
+  walletTransactions WalletTransaction[]
+  racketStringings RacketStringing[]
 }
 
 // ---------------- SPORTS BOOKING ----------------
@@ -118,26 +177,65 @@ model Slot {
 // ---------------- CAFE ----------------
 
 model CafeOrder {
-  id          String   @id @default(uuid())
-  userID      String
-  tableNumber Int?
-  orderItems  String[]
-  orderNumber String   @unique
-  dateTime    DateTime @default(now())
-  totalAmount Decimal  @db.Decimal(10, 2)
+  id               String          @id @default(uuid())
+  userID           String
+  tableNumber      Int?
+  courtNumber      String?
+  deliveryLocation String          @default("BAR_LOUNGE") // "BAR_LOUNGE", "COURT_SIDE", "TAKEAWAY"
+  status           String          @default("RECEIVED") // "RECEIVED", "PREPARING", "READY", "SERVED", "CANCELLED"
+  orderItems       String[]
+  orderNumber      String          @unique
+  subtotal         Decimal         @default(0) @db.Decimal(10, 2)
+  discount         Decimal         @default(0) @db.Decimal(10, 2)
+  totalAmount      Decimal         @db.Decimal(10, 2)
+  paymentMethod    PaymentMethod   @default(VIRTUAL_CARD)
+  paymentStatus    String          @default("PAID")
+  notes            String?
+  dateTime         DateTime        @default(now())
+  fulfilledAt      DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
-  user        User     @relation(fields: [userID], references: [id])
+  user             User            @relation(fields: [userID], references: [id])
+  items            CafeOrderItem[]
+
+  @@index([userID, status])
+  @@index([status, dateTime])
+}
+
+model CafeOrderItem {
+  id         String        @id @default(uuid())
+  orderId    String
+  menuItemId String?
+  name       String
+  category   String?
+  quantity   Int           @default(1)
+  unitPrice  Decimal       @db.Decimal(10, 2)
+  totalPrice Decimal       @db.Decimal(10, 2)
+
+  order      CafeOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   CafeMenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
 }
 
 model CafeMenuItem {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  category    String
-  price       Decimal  @db.Decimal(10, 2)
-  isAvailable Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String          @id @default(uuid())
+  name         String
+  description  String?
+  category     String          // "BEVERAGES", "SMOOTHIES", "PROTEIN", "FOOD", "COFFEE", "SNACKS"
+  price        Decimal         @db.Decimal(10, 2)
+  image        String?
+  calories     Int?
+  prepTimeMin  Int             @default(5)
+  isAvailable  Boolean         @default(true)
+  isVegan      Boolean         @default(false)
+  isGlutenFree Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  orderItems   CafeOrderItem[]
+
+  @@index([category, isAvailable])
 }
 
 // ---------------- SPORT SHOP PURCHASE ----------------
@@ -150,6 +248,10 @@ model SportShopPurchase {
   items           String[]
   status          String               @default("PENDING")
   fulfillmentType String               @default("PICKUP")
+  pickupCode      String?
+  deliveryAddress String?
+  trackingNotes   String?
+  fulfilledAt     DateTime?
   discount        Decimal              @default(0) @db.Decimal(10, 2)
   purchaseDate    DateTime             @default(now())
   totalAmount     Decimal              @db.Decimal(10, 2)
@@ -175,29 +277,90 @@ model SportShopOrderItem {
 // ---------------- PRODUCT / STOCK ----------------
 
 model Product {
-  id         String               @id @default(uuid())
-  name       String
-  category   String
-  buyPrice   Decimal              @db.Decimal(10, 2)
-  rentPrice  Decimal?             @db.Decimal(10, 2)
-  size       String?
-  inStock    Int                  @default(0)
+  id                String               @id @default(uuid())
+  name              String
+  category          String
+  buyPrice          Decimal              @db.Decimal(10, 2)
+  rentPrice         Decimal?             @db.Decimal(10, 2)
+  size              String?
+  inStock           Int                  @default(0)
+  minStockThreshold Int                  @default(5)
 
-  orderItems SportShopOrderItem[]
+  orderItems        SportShopOrderItem[]
+}
+
+// ---------------- RACKET STRINGING & EQUIPMENT SERVICE ----------------
+
+model RacketStringing {
+  id              String         @id @default(uuid())
+  userID          String
+  racketModel     String
+  sport           CourtType      @default(BADMINTON)
+  stringName      String
+  tensionLbs      Decimal        @db.Decimal(4, 1)
+  urgency         ServiceUrgency @default(STANDARD)
+  price           Decimal        @db.Decimal(10, 2)
+  paymentMethod   PaymentMethod  @default(VIRTUAL_CARD)
+  paymentStatus   String         @default("PAID")
+  status          ServiceStatus  @default(RECEIVED)
+  notes           String?
+  stringerStaffId String?
+  receivedAt      DateTime       @default(now())
+  estimatedReady  DateTime?
+  completedAt     DateTime?
+  collectedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userID], references: [id])
+  stringerStaff   Staff?         @relation(fields: [stringerStaffId], references: [id])
+
+  @@index([userID, status])
+  @@index([status, urgency])
 }
 
 // ---------------- STAFF ----------------
 
 model Staff {
-  id          String          @id @default(uuid())
-  name        String
-  email       String          @unique
-  phone       String
-  role        String
-  designation String?
-  salary      Decimal         @db.Decimal(10, 2)
-  createdAt   DateTime        @default(now())
-  schedules   StaffSchedule[]
+  id                 String            @id @default(uuid())
+  name               String
+  email              String            @unique
+  phone              String
+  role               String
+  designation        String?
+  salary             Decimal           @db.Decimal(10, 2)
+  annualLeaveQuota   Int               @default(18)
+  sickLeaveQuota     Int               @default(12)
+  createdAt          DateTime          @default(now())
+  schedules          StaffSchedule[]
+  leaves             StaffLeave[]      @relation("StaffLeaves")
+  coveredLeaves      StaffLeave[]      @relation("StaffCoverage")
+  assignedStringings RacketStringing[]
+}
+
+// ---------------- STAFF LEAVE ----------------
+
+model StaffLeave {
+  id           String      @id @default(uuid())
+  staffId      String
+  leaveType    LeaveType   @default(CASUAL)
+  startDate    DateTime
+  endDate      DateTime
+  daysCount    Int         @default(1)
+  reason       String
+  status       LeaveStatus @default(PENDING)
+  reviewedBy   String?
+  reviewNotes  String?
+  reviewedAt   DateTime?
+  coverStaffId String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  staff        Staff       @relation("StaffLeaves", fields: [staffId], references: [id], onDelete: Cascade)
+  coverStaff   Staff?      @relation("StaffCoverage", fields: [coverStaffId], references: [id], onDelete: SetNull)
+
+  @@index([staffId, status])
+  @@index([startDate, endDate])
 }
 
 // ---------------- STAFF SCHEDULE ----------------
@@ -224,4 +387,54 @@ model CallLog {
   notes      String?
   callTime   DateTime @default(now())
   createdAt  DateTime @default(now())
+}
+
+// ---------------- CRM / ENQUIRY ----------------
+
+model Enquiry {
+  id                   String               @id @default(uuid())
+  name                 String
+  email                String
+  phone                String
+  sportOfInterest      CourtType?
+  membershipOfInterest Membership?
+  message              String?
+  status               EnquiryStatus        @default(NEW)
+  isTrialRequested     Boolean              @default(false)
+  preferredTrialDate   DateTime?
+  preferredTrialTime   String?
+  notes                String?
+  quoteAmount          Decimal?             @db.Decimal(10, 2)
+  quoteDetails         String?
+  quoteSentAt          DateTime?
+  convertedUserId      String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([phone])
+}
+
+// ---------------- VIRTUAL CARD & WALLET TRANSACTIONS ----------------
+
+model WalletTransaction {
+  id            String             @id @default(uuid())
+  userID        String
+  phone         String
+  type          TransactionType
+  amount        Decimal            @db.Decimal(10, 2)
+  balanceAfter  Decimal            @db.Decimal(10, 2)
+  paymentMethod PaymentMethod      @default(VIRTUAL_CARD)
+  module        TransactionModule  @default(WALLET_TOPUP)
+  referenceId   String?
+  description   String?
+  createdAt     DateTime           @default(now())
+
+  user          User               @relation(fields: [userID], references: [id])
+
+  @@index([userID, createdAt])
+  @@index([phone])
+  @@index([paymentMethod, createdAt])
+  @@index([module, createdAt])
 }

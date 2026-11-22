@@ -48,18 +48,43 @@ export const formatUTCToKolkata = (utcDate) => {
 };
 
 /**
- * Generate 30-minute interval slots between openTime and closeTime for a specific date in Asia/Kolkata.
+ * Determines whether a given date and time falls on Friday night social play (Friday 18:00+).
+ * As per PRD: "on Friday night the courts open up for social play where many people share one court".
+ *
+ * @param {string} dateStr - 'YYYY-MM-DD'
+ * @param {string} [timeStr] - 'HH:mm'
+ * @returns {boolean}
+ */
+export const isFridaySocialPlay = (dateStr, timeStr) => {
+  if (!dateStr) return false;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day));
+  const isFriday = d.getUTCDay() === 5; // 5 = Friday
+  if (!isFriday) return false;
+
+  if (timeStr) {
+    const [h] = timeStr.split(":").map(Number);
+    return h >= 18; // 6:00 PM onwards
+  }
+  return true;
+};
+
+/**
+ * Generate 1-hour session slots opening every 30 minutes between openTime and closeTime for a specific date in Asia/Kolkata.
+ * Per PRD: "Sessions last an hour, a new slot opens every half hour".
  *
  * @param {string} dateStr - 'YYYY-MM-DD'
  * @param {string} openTime - 'HH:mm', e.g. '06:00'
  * @param {string} closeTime - 'HH:mm', e.g. '22:00'
- * @param {number} slotDurationMinutes - default 30
+ * @param {number} sessionDurationMinutes - default 60 (1 hour)
+ * @param {number} stepMinutes - default 30 (new slot opens every half hour)
  */
 export const generateDailySlots = (
   dateStr,
   openTime = "06:00",
   closeTime = "22:00",
-  slotDurationMinutes = 30
+  sessionDurationMinutes = 60,
+  stepMinutes = 30
 ) => {
   const slots = [];
   const [openH, openM] = openTime.split(":").map(Number);
@@ -70,10 +95,10 @@ export const generateDailySlots = (
 
   const now = new Date();
 
-  for (let currentMins = openTotalMins; currentMins + slotDurationMinutes <= closeTotalMins; currentMins += slotDurationMinutes) {
+  for (let currentMins = openTotalMins; currentMins + sessionDurationMinutes <= closeTotalMins; currentMins += stepMinutes) {
     const startH = String(Math.floor(currentMins / 60)).padStart(2, "0");
     const startM = String(currentMins % 60).padStart(2, "0");
-    const endMins = currentMins + slotDurationMinutes;
+    const endMins = currentMins + sessionDurationMinutes;
     const endH = String(Math.floor(endMins / 60)).padStart(2, "0");
     const endM = String(endMins % 60).padStart(2, "0");
 
@@ -91,6 +116,8 @@ export const generateDailySlots = (
       endTimeStr,
       label: `${startTimeStr} - ${endTimeStr}`,
       isPast: startUTC.getTime() <= now.getTime(),
+      sessionDurationMinutes,
+      isSocialPlay: isFridaySocialPlay(dateStr, startTimeStr),
     });
   }
 

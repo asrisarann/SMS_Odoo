@@ -43,6 +43,18 @@ export default function Sidebar({ isOpen, onClose }) {
               </Link>
             </li>
             <li>
+              <Link to="/shop" onClick={onClose}>
+                <i className="fa-solid fa-store mr-2 text-[#C6EF2E]"></i>
+                Pro Shop & Stringing
+              </Link>
+            </li>
+            <li>
+              <Link to="/bar" onClick={onClose}>
+                <i className="fa-solid fa-utensils mr-2 text-[#C6EF2E]"></i>
+                Court-Side Bar & Cafe
+              </Link>
+            </li>
+            <li>
               <Link to="/about" onClick={onClose}>
                 About Us
               </Link>
@@ -55,6 +67,12 @@ export default function Sidebar({ isOpen, onClose }) {
             <li>
               <Link to="/front-desk" onClick={onClose}>
                 Front Desk Operations
+              </Link>
+            </li>
+            <li>
+              <Link to="/wallet" onClick={onClose}>
+                <i className="fa-solid fa-wallet mr-2 text-[#C6EF2E]"></i>
+                Club Wallet & Virtual Card
               </Link>
             </li>
             <li>

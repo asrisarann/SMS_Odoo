@@ -21,6 +21,14 @@ import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
 import AuthPage from './pages/AuthPage';
 import FrontDeskPage from './pages/FrontDeskPage';
+import SuperAdminPage from './pages/SuperAdminPage';
+import AdminPage from './pages/AdminPage';
+import ShopAdminPage from './pages/ShopAdminPage';
+import BarAdminPage from './pages/BarAdminPage';
+import WalletPage from './pages/WalletPage';
+import ShopPage from './pages/ShopPage';
+import BarMenuPage from './pages/BarMenuPage';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -62,6 +70,9 @@ export default function App() {
             <Route path="/" element={<HomePage onOpenVideo={handleOpenVideo} />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/booking" element={<BookingPage />} />
+            <Route path="/shop" element={<ShopPage />} />
+            <Route path="/bar" element={<BarMenuPage />} />
+            <Route path="/cafe" element={<BarMenuPage />} />
             <Route path="/membership" element={<MembershipPage />} />
             <Route path="/service" element={<ServicePage />} />
             <Route path="/event" element={<EventPage />} />
@@ -70,10 +81,81 @@ export default function App() {
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/front-desk" element={<FrontDeskPage />} />
-            <Route path="/frontdesk" element={<FrontDeskPage />} />
             <Route path="/login" element={<AuthPage initialMode="login" />} />
             <Route path="/register" element={<AuthPage initialMode="register" />} />
+
+            {/* Member Virtual Card & Club Wallet Hub */}
+            <Route
+              path="/wallet"
+              element={
+                <ProtectedRoute allowedRoles={['SUPERADMIN', 'ADMIN', 'SUBADMIN', 'STAFF', 'MEMBER']}>
+                  <WalletPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Role-Protected Admin & Department Dashboards */}
+            <Route
+              path="/super-admin"
+              element={
+                <ProtectedRoute allowedRoles={['SUPERADMIN']}>
+                  <SuperAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={['SUPERADMIN', 'ADMIN']}>
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shop-admin"
+              element={
+                <ProtectedRoute
+                  allowedRoles={['SUPERADMIN', 'ADMIN', 'SUBADMIN', 'STAFF']}
+                  allowedModules={['shop', 'sports shop']}
+                >
+                  <ShopAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bar-admin"
+              element={
+                <ProtectedRoute
+                  allowedRoles={['SUPERADMIN', 'ADMIN', 'SUBADMIN', 'STAFF']}
+                  allowedModules={['bar', 'cafe']}
+                >
+                  <BarAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/front-desk"
+              element={
+                <ProtectedRoute
+                  allowedRoles={['SUPERADMIN', 'ADMIN', 'SUBADMIN', 'STAFF']}
+                  allowedModules={['front-desk', 'reception', 'operations']}
+                >
+                  <FrontDeskPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/frontdesk"
+              element={
+                <ProtectedRoute
+                  allowedRoles={['SUPERADMIN', 'ADMIN', 'SUBADMIN', 'STAFF']}
+                  allowedModules={['front-desk', 'reception', 'operations']}
+                >
+                  <FrontDeskPage />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Fallback to Home */}
             <Route path="*" element={<HomePage onOpenVideo={handleOpenVideo} />} />
           </Routes>

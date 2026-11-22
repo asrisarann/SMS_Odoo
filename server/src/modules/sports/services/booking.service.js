@@ -1,11 +1,18 @@
 import prisma from "../../../config/prisma.js";
-import { parseKolkataToUTC, formatUTCToKolkata } from "../utils/slot.utils.js";
+import { parseKolkataToUTC, formatUTCToKolkata, isFridaySocialPlay } from "../utils/slot.utils.js";
 import { calculateBookingPrice, getSportPricing } from "./pricing.service.js";
 import { broadcastBookingEvent } from "../sockets/booking.socket.js";
 
 /**
  * 1. Create Temporary Booking Hold (3 Minutes):
  * Concurrency-safe hold creation protected by PostgreSQL transaction and row-level locking.
+ * 
+ * Requirements enforced from PRD:
+ * - Sessions last an hour, a new slot opens every half hour.
+ * - Each member can play at most twice a day.
+ * - Friday night social play allows shared court capacity.
+ * - Walk-ins at the counter can be booked directly by front desk staff.
+ * - Concurrency lock guarantees two people never end up on the same court at the same time.
  */
 export const createBookingHold = async ({
   userId,
@@ -13,9 +20,16 @@ export const createBookingHold = async ({
   date,
   startTime,
   playerCount = 1,
+  durationMinutes = 60, // Standard 1-hour sessions per PRD
+  isWalkin = false,
+  walkinName = null,
+  walkinPhone = null,
+  walkinEmail = null,
+  role = "MEMBER",
 }) => {
   const normalizedSport = (sport || "").toUpperCase();
   const count = parseInt(playerCount, 10);
+  const sessionDuration = parseInt(durationMinutes, 10) || 60;
 
   if (!normalizedSport) {
     throw new Error("Sport is required");
@@ -29,7 +43,7 @@ export const createBookingHold = async ({
 
   // Parse slot start and end times in UTC
   const slotStartTime = parseKolkataToUTC(date, startTime);
-  const slotEndTime = new Date(slotStartTime.getTime() + 30 * 60 * 1000);
+  const slotEndTime = new Date(slotStartTime.getTime() + sessionDuration * 60 * 1000);
   const now = new Date();
 
   // Validate not in past
@@ -37,9 +51,63 @@ export const createBookingHold = async ({
     throw new Error("Cannot book slots in the past");
   }
 
+  let targetUserId = userId;
+  const isPrivilegedStaff = ["SUPERADMIN", "ADMIN", "STAFF"].includes(role);
+
+  // If front desk staff is booking directly for a walk-in at counter
+  if ((isWalkin || walkinPhone) && isPrivilegedStaff) {
+    const searchPhone = (walkinPhone || "").trim();
+    if (searchPhone) {
+      let existingWalkin = await prisma.user.findUnique({
+        where: { phone: searchPhone },
+      });
+      if (!existingWalkin) {
+        existingWalkin = await prisma.user.create({
+          data: {
+            name: walkinName?.trim() || "Walk-in Guest",
+            phone: searchPhone,
+            email: walkinEmail?.trim() || `walkin-${Date.now()}-${Math.floor(Math.random() * 1000)}@championsclub.local`,
+            membership: "JUNIOR",
+            role: "MEMBER",
+            lastEntry: new Date(),
+          },
+        });
+      }
+      targetUserId = existingWalkin.id;
+    }
+  }
+
+  // Enforce member daily limit: "each member can play at most twice a day"
+  // Exempt staff booking on behalf of walk-ins
+  if (!isWalkin) {
+    const dayStartUTC = parseKolkataToUTC(date, "00:00");
+    const nextDayStartUTC = new Date(dayStartUTC.getTime() + 24 * 60 * 60 * 1000);
+
+    const dailyBookingsCount = await prisma.sportsBooking.count({
+      where: {
+        userID: targetUserId,
+        slot: {
+          gte: dayStartUTC,
+          lt: nextDayStartUTC,
+        },
+        OR: [
+          { status: "CONFIRMED" },
+          {
+            status: "HELD",
+            expiresAt: { gt: now },
+          },
+        ],
+      },
+    });
+
+    if (dailyBookingsCount >= 2) {
+      throw new Error("Daily play limit reached. Each member can play at most twice a day.");
+    }
+  }
+
   // Get user membership for dynamic pricing
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: targetUserId },
     select: { id: true, membership: true, amount: true },
   });
 
@@ -50,13 +118,19 @@ export const createBookingHold = async ({
   // Calculate dynamic pricing
   const pricingData = await calculateBookingPrice(
     normalizedSport,
-    user.membership,
+    isWalkin ? null : user.membership,
     count
   );
 
+  // Friday night social play capacity expansion
+  const isSocial = isFridaySocialPlay(date, startTime);
+  const effectiveCapacity = isSocial
+    ? Math.max(pricingData.capacity * 3, 16)
+    : pricingData.capacity;
+
   const holdExpiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
 
-  // Execute in serializable/locked transaction to protect capacity
+  // Execute in serializable/locked transaction to protect capacity and prevent overlapping collisions
   const holdBooking = await prisma.$transaction(async (tx) => {
     // 1. Ensure a Slot row exists for this court and time
     const slot = await tx.slot.upsert({
@@ -67,13 +141,13 @@ export const createBookingHold = async ({
         },
       },
       update: {
-        maxCapacity: pricingData.capacity,
+        maxCapacity: effectiveCapacity,
       },
       create: {
         whichCourt: normalizedSport,
         startTime: slotStartTime,
         endTime: slotEndTime,
-        maxCapacity: pricingData.capacity,
+        maxCapacity: effectiveCapacity,
       },
     });
 
@@ -84,12 +158,14 @@ export const createBookingHold = async ({
       FOR UPDATE
     `;
 
-    // 3. Count currently occupied capacity (CONFIRMED + active HELD)
+    // 3. Count currently occupied capacity overlapping with [slotStartTime, slotEndTime)
+    // Ensures two people never end up on the same court at the same time
     const occupiedRows = await tx.$queryRaw`
       SELECT COALESCE(SUM("playerCount"), 0)::int as occupied
       FROM "SportsBooking"
       WHERE "whichCourt" = ${normalizedSport}::"CourtType"
-        AND "slot" = ${slotStartTime}
+        AND "slot" < ${slotEndTime}
+        AND "endTime" > ${slotStartTime}
         AND (
           "status" = 'CONFIRMED'
           OR ("status" = 'HELD' AND "expiresAt" > NOW())
@@ -97,7 +173,7 @@ export const createBookingHold = async ({
     `;
 
     const currentlyOccupied = occupiedRows[0]?.occupied || 0;
-    const remainingCapacity = pricingData.capacity - currentlyOccupied;
+    const remainingCapacity = effectiveCapacity - currentlyOccupied;
 
     if (count > remainingCapacity) {
       throw new Error(
@@ -108,7 +184,7 @@ export const createBookingHold = async ({
     // 4. Create the HELD booking record
     return tx.sportsBooking.create({
       data: {
-        userID: userId,
+        userID: targetUserId,
         whichCourt: normalizedSport,
         slot: slotStartTime,
         endTime: slotEndTime,
@@ -132,12 +208,15 @@ export const createBookingHold = async ({
     bookingId: holdBooking.id,
     slot: startTime,
     playerCount: count,
+    isSocialPlay: isSocial,
   });
 
   return {
     ...holdBooking,
     holdDurationMinutes: 3,
     expiresInSeconds: 180,
+    sessionDurationMinutes: sessionDuration,
+    isSocialPlay: isSocial,
   };
 };
 
@@ -162,7 +241,12 @@ export const confirmBookingHold = async ({ userId, holdId }) => {
     }
 
     if (booking.userID !== userId) {
-      throw new Error("You do not have permission to confirm this hold");
+      // Check if user is admin/staff
+      const caller = await tx.user.findUnique({ where: { id: userId } });
+      const isPrivileged = caller && ["SUPERADMIN", "ADMIN", "STAFF"].includes(caller.role);
+      if (!isPrivileged) {
+        throw new Error("You do not have permission to confirm this hold");
+      }
     }
 
     if (booking.status === "CONFIRMED") {
@@ -185,7 +269,7 @@ export const confirmBookingHold = async ({ userId, holdId }) => {
 
     // 3. Lock user row and check balance
     const user = await tx.user.findUnique({
-      where: { id: userId },
+      where: { id: booking.userID },
     });
 
     const userBalance = Number(user.amount);
@@ -199,7 +283,7 @@ export const confirmBookingHold = async ({ userId, holdId }) => {
 
     // 4. Deduct balance from user wallet
     const updatedUser = await tx.user.update({
-      where: { id: userId },
+      where: { id: booking.userID },
       data: {
         amount: {
           decrement: bookingCost,
@@ -249,7 +333,11 @@ export const releaseBookingHold = async ({ userId, holdId }) => {
   }
 
   if (booking.userID !== userId) {
-    throw new Error("Unauthorized to release this hold");
+    const caller = await prisma.user.findUnique({ where: { id: userId } });
+    const isPrivileged = caller && ["SUPERADMIN", "ADMIN", "STAFF"].includes(caller.role);
+    if (!isPrivileged) {
+      throw new Error("Unauthorized to release this hold");
+    }
   }
 
   if (booking.status !== "HELD") {
@@ -283,7 +371,7 @@ export const cancelConfirmedBooking = async ({ userId, bookingId, role }) => {
       throw new Error("Booking not found");
     }
 
-    if (role !== "ADMIN" && booking.userID !== userId) {
+    if (role !== "ADMIN" && role !== "SUPERADMIN" && booking.userID !== userId) {
       throw new Error("You do not have permission to cancel this booking");
     }
 
@@ -369,7 +457,8 @@ export const getBookingById = async (userId, bookingId, role) => {
     throw new Error("Booking not found");
   }
 
-  if (role !== "ADMIN" && booking.userID !== userId) {
+  const isPrivileged = ["ADMIN", "SUPERADMIN", "STAFF"].includes(role);
+  if (!isPrivileged && booking.userID !== userId) {
     throw new Error("Unauthorized to view this booking");
   }
 

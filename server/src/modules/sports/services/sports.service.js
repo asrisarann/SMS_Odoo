@@ -1,5 +1,5 @@
 import prisma from "../../../config/prisma.js";
-import { generateDailySlots, formatUTCToKolkata } from "../utils/slot.utils.js";
+import { generateDailySlots, formatUTCToKolkata, isFridaySocialPlay } from "../utils/slot.utils.js";
 import { getSportPricing, getAllSportPricing } from "./pricing.service.js";
 
 /**
@@ -12,17 +12,19 @@ export const getSportsList = async () => {
 /**
  * Get slot availability for a sport on a given date (YYYY-MM-DD in Asia/Kolkata).
  * Takes into account CONFIRMED bookings and active HELD bookings (< 3 mins old).
+ * Per PRD: Sessions last 1 hour, slots open every 30 minutes, Friday evening social play.
  */
 export const getSportSlotsAvailability = async (sport, dateStr) => {
   const pricing = await getSportPricing(sport);
   const normalizedSport = pricing.sport;
 
-  // Generate all 30-minute slots for the day
+  // Generate 1-hour session slots opening every 30 minutes
   const rawSlots = generateDailySlots(
     dateStr,
     pricing.openTime,
     pricing.closeTime,
-    30
+    60, // 1 hour session duration
+    30  // new slot opens every half hour
   );
 
   if (rawSlots.length === 0) {
@@ -33,14 +35,12 @@ export const getSportSlotsAvailability = async (sport, dateStr) => {
   const endOfDayUTC = rawSlots[rawSlots.length - 1].slotEndTime;
   const now = new Date();
 
-  // Query all non-cancelled, non-expired bookings for this sport on this day
+  // Query all non-cancelled, non-expired bookings for this sport that overlap with the day
   const bookings = await prisma.sportsBooking.findMany({
     where: {
       whichCourt: normalizedSport,
-      slot: {
-        gte: startOfDayUTC,
-        lt: endOfDayUTC,
-      },
+      endTime: { gt: startOfDayUTC },
+      slot: { lt: endOfDayUTC },
       OR: [
         { status: "CONFIRMED" },
         {
@@ -51,33 +51,36 @@ export const getSportSlotsAvailability = async (sport, dateStr) => {
     },
     select: {
       slot: true,
+      endTime: true,
       playerCount: true,
       status: true,
       expiresAt: true,
     },
   });
 
-  // Aggregate booked and held count by slot time
-  const usageMap = new Map();
-  for (const b of bookings) {
-    const key = b.slot.toISOString();
-    const current = usageMap.get(key) || { confirmed: 0, held: 0 };
-    if (b.status === "CONFIRMED") {
-      current.confirmed += b.playerCount;
-    } else if (b.status === "HELD" && b.expiresAt > now) {
-      current.held += b.playerCount;
-    }
-    usageMap.set(key, current);
-  }
-
-  // Build response for each slot
+  // Build response for each slot with overlap calculation
   return rawSlots.map((slot) => {
-    const key = slot.slotStartTime.toISOString();
-    const usage = usageMap.get(key) || { confirmed: 0, held: 0 };
+    const isSocial = Boolean(slot.isSocialPlay);
+    // Friday night social play allows shared court capacity among many players
+    const maxCapacity = isSocial
+      ? Math.max(pricing.capacity * 3, 16)
+      : pricing.capacity;
 
-    const maxCapacity = pricing.capacity;
-    const bookedCapacity = usage.confirmed;
-    const heldCapacity = usage.held;
+    let bookedCapacity = 0;
+    let heldCapacity = 0;
+
+    for (const b of bookings) {
+      const bEndTime = b.endTime || new Date(b.slot.getTime() + 60 * 60 * 1000);
+      // Overlap check: existing booking overlaps with slot if b.slot < slot.slotEndTime && bEndTime > slot.slotStartTime
+      if (b.slot < slot.slotEndTime && bEndTime > slot.slotStartTime) {
+        if (b.status === "CONFIRMED") {
+          bookedCapacity += b.playerCount;
+        } else if (b.status === "HELD" && b.expiresAt > now) {
+          heldCapacity += b.playerCount;
+        }
+      }
+    }
+
     const totalOccupied = bookedCapacity + heldCapacity;
     const availableCapacity = Math.max(0, maxCapacity - totalOccupied);
     const isFull = availableCapacity === 0;
@@ -97,6 +100,8 @@ export const getSportSlotsAvailability = async (sport, dateStr) => {
       endTime: slot.endTimeStr,
       label: slot.label,
       isPast: slot.isPast,
+      sessionDurationMinutes: slot.sessionDurationMinutes || 60,
+      isSocialPlay: isSocial,
       maxCapacity,
       bookedCapacity,
       heldCapacity,

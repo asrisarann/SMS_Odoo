@@ -12,6 +12,11 @@ import { superAdminRoutes } from "./modules/superAdmin/index.js";
 import { membershipRoutes } from "./modules/membership/index.js";
 import { authenticate, authorizeModule } from "./common/middlewares/auth.middleware.js";
 import frontDeskRouter from "./modules/front-desk/index.js";
+import crmRoutes from "./modules/crm/crm.routes.js";
+import walletRoutes from "./modules/wallet/wallet.routes.js";
+import financialsRoutes from "./modules/financials/financials.routes.js";
+import staffLeaveRoutes from "./modules/front-desk/staff/leave/leave.routes.js";
+import { cafeRoutes } from "./modules/cafe/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +34,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/shop", sportsShopRouter);
+app.use("/api/sport-shop", sportsShopRouter);
+app.use("/api/sports/shop", sportsShopRouter);
 // Serve Interactive HTML API Documentation
 app.get(["/api/docs", "/docs"], (req, res) => {
   res.sendFile(path.resolve(__dirname, "../../api-docs.html"));
@@ -86,6 +93,27 @@ app.get("/api/modules/sports", authenticate, authorizeModule("sports"), (req, re
     user: req.user,
   });
 });
+
+// CRM & Online Inquiries / Leads Pipeline
+app.use("/api/enquiries", crmRoutes);
+app.use("/api/crm", crmRoutes);
+
+// Virtual Card & Club Wallet Routes
+app.use("/api/wallet", walletRoutes);
+app.use("/api/virtual-card", walletRoutes);
+
+// Executive Consolidated Financials & Monthly Reports
+app.use("/api/financials", financialsRoutes);
+app.use("/api/super-admin/financials", financialsRoutes);
+
+// Staff Leave Management & HR Approvals (Scene 4)
+app.use("/api/staff/leaves", staffLeaveRoutes);
+app.use("/api/leaves", staffLeaveRoutes);
+app.use("/api/super-admin/staff/leaves", staffLeaveRoutes);
+
+// Court-Side Bar & Cafeteria Routes
+app.use("/api/cafe", cafeRoutes);
+app.use("/api/bar", cafeRoutes);
 
 // Front Desk module routes
 app.use("/api/front-desk", frontDeskRouter);

@@ -121,9 +121,7 @@ Version: 1.0.0
 
 /* 04. Base Settings */
 
-*{
-    margin: 0;
-    padding: 0;
+*, ::before, ::after{
     box-sizing: border-box;
 }
 

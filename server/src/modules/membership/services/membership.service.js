@@ -173,3 +173,302 @@ export const processExpiringMemberships = async (daysPending = 2) => {
 
 // Wire the email sender function as the default queue processor
 setReminderProcessor(sendMembershipExpiryEmail);
+
+// ============================================================================
+// MEMBER SELF-SERVICE: PLANS, STATUS, RENEWAL & UPGRADE
+// ============================================================================
+
+export const MEMBERSHIP_PLANS = {
+  GOLD: {
+    tier: "GOLD",
+    name: "Gold All-Access Membership",
+    annualFee: 25000,
+    renewalFee: 22000,
+    courtDiscount: 20,
+    shopDiscount: 30,
+    cafeDiscount: 20,
+    advanceBookingDays: 7,
+    benefits: [
+      "20% off all Court Bookings (Padel, Tennis, Badminton, Cricket)",
+      "30% off Sports Gear & Apparel at Champions Pro Shop",
+      "20% off Court-Side Bar & Cafeteria tabs",
+      "7-Day advance court slot booking window",
+      "Complimentary monthly racket re-gripping",
+      "2 Monthly guest passes for friends & family",
+    ],
+  },
+  SILVER: {
+    tier: "SILVER",
+    name: "Silver Regular Membership",
+    annualFee: 15000,
+    renewalFee: 13500,
+    courtDiscount: 10,
+    shopDiscount: 15,
+    cafeDiscount: 10,
+    advanceBookingDays: 4,
+    benefits: [
+      "10% off all Court Bookings",
+      "15% off Pro Shop equipment and strings",
+      "10% off Bar & Cafeteria orders",
+      "4-Day advance court slot booking window",
+      "Access to club social mixer tournaments",
+      "Free locker usage during game sessions",
+    ],
+  },
+  JUNIOR: {
+    tier: "JUNIOR",
+    name: "Junior Academy Membership",
+    annualFee: 8000,
+    renewalFee: 7200,
+    courtDiscount: 15,
+    shopDiscount: 11,
+    cafeDiscount: 5,
+    advanceBookingDays: 3,
+    benefits: [
+      "15% off court bookings during junior training hours",
+      "11% off junior rackets, footwear, and equipment",
+      "Priority registration for certified junior coaching clinics",
+      "3-Day advance slot booking window",
+      "Dedicated coaching assessment and quarterly progress report",
+    ],
+  },
+};
+
+export const getMembershipPlans = () => {
+  return Object.values(MEMBERSHIP_PLANS);
+};
+
+export const getMemberMembershipStatus = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      membership: true,
+      renewalDate: true,
+      amount: true,
+      lastEntry: true,
+    },
+  });
+
+  if (!user) {
+    const error = new Error(`User with ID '${userId}' not found.`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const now = new Date();
+  let status = "ACTIVE";
+  let daysRemaining = 0;
+
+  if (!user.renewalDate) {
+    status = user.membership && user.membership !== "NONE" ? "ACTIVE" : "NONE";
+  } else {
+    const renewal = new Date(user.renewalDate);
+    if (renewal < now) {
+      status = "EXPIRED";
+      daysRemaining = 0;
+    } else {
+      const diffMs = renewal.getTime() - now.getTime();
+      daysRemaining = Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+      if (daysRemaining <= 5) {
+        status = "EXPIRING_SOON";
+      } else {
+        status = "ACTIVE";
+      }
+    }
+  }
+
+  const plan = MEMBERSHIP_PLANS[user.membership] || null;
+
+  return {
+    user,
+    status,
+    daysRemaining,
+    plan,
+    plans: Object.values(MEMBERSHIP_PLANS),
+  };
+};
+
+export const renewMembership = async ({ userId, paymentMethod = "VIRTUAL_CARD" }) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    const error = new Error(`User with ID '${userId}' not found.`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const plan = MEMBERSHIP_PLANS[user.membership] || MEMBERSHIP_PLANS.SILVER;
+  const renewalCost = plan.renewalFee || plan.annualFee;
+
+  // If paying via Virtual Card, verify balance and debit
+  if (paymentMethod === "VIRTUAL_CARD") {
+    const currentBalance = Number(user.amount);
+    if (currentBalance < renewalCost) {
+      const error = new Error(
+        `Insufficient virtual card balance (₹${currentBalance.toFixed(2)}). Renewal fee is ₹${renewalCost}. Please top up your wallet.`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  const now = new Date();
+  let baseDate = now;
+  if (user.renewalDate && new Date(user.renewalDate) > now) {
+    baseDate = new Date(user.renewalDate);
+  }
+
+  // Extend by 365 days
+  const newRenewalDate = new Date(baseDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    let balanceAfter = Number(user.amount);
+
+    if (paymentMethod === "VIRTUAL_CARD") {
+      const decremented = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          amount: { decrement: renewalCost },
+        },
+      });
+      balanceAfter = Number(decremented.amount);
+
+      await tx.walletTransaction.create({
+        data: {
+          userID: user.id,
+          phone: user.phone,
+          type: "DEBIT",
+          amount: renewalCost,
+          balanceAfter,
+          paymentMethod: "VIRTUAL_CARD",
+          module: "MEMBERSHIP",
+          description: `1-Year ${user.membership} Membership Renewal Fee`,
+        },
+      });
+    }
+
+    return await tx.user.update({
+      where: { id: user.id },
+      data: {
+        renewalDate: newRenewalDate,
+      },
+    });
+  });
+
+  // Send confirmation email
+  await sendEmail({
+    to: user.email,
+    subject: `Membership Renewed: 1-Year ${user.membership} Plan Extended!`,
+    text: `Hello ${user.name},\n\nYour ${user.membership} membership has been renewed successfully until ${formatDateString(newRenewalDate)}.\n\nThank you for playing with Champions Club!\n\nThe Champions Club Team`,
+  });
+
+  return {
+    success: true,
+    message: `Membership renewed successfully until ${formatDateString(newRenewalDate)}.`,
+    newRenewalDate,
+    membershipTier: updatedUser.membership,
+    walletBalance: Number(updatedUser.amount),
+  };
+};
+
+export const upgradeMembership = async ({ userId, targetTier, paymentMethod = "VIRTUAL_CARD" }) => {
+  const normTier = (targetTier || "").toUpperCase();
+  const plan = MEMBERSHIP_PLANS[normTier];
+
+  if (!plan) {
+    const error = new Error(`Invalid target tier '${targetTier}'. Allowed: GOLD, SILVER, JUNIOR`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    const error = new Error(`User with ID '${userId}' not found.`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (user.membership === normTier) {
+    const error = new Error(`User already holds a ${normTier} membership.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const currentPlan = MEMBERSHIP_PLANS[user.membership];
+  let upgradeCost = plan.annualFee;
+  if (currentPlan && plan.annualFee > currentPlan.annualFee) {
+    upgradeCost = plan.annualFee - currentPlan.annualFee;
+  }
+
+  if (paymentMethod === "VIRTUAL_CARD") {
+    const currentBalance = Number(user.amount);
+    if (currentBalance < upgradeCost) {
+      const error = new Error(
+        `Insufficient wallet balance (₹${currentBalance.toFixed(2)}). Upgrade fee is ₹${upgradeCost}. Please top up your wallet.`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  const newRenewalDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    let balanceAfter = Number(user.amount);
+
+    if (paymentMethod === "VIRTUAL_CARD") {
+      const decremented = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          amount: { decrement: upgradeCost },
+        },
+      });
+      balanceAfter = Number(decremented.amount);
+
+      await tx.walletTransaction.create({
+        data: {
+          userID: user.id,
+          phone: user.phone,
+          type: "DEBIT",
+          amount: upgradeCost,
+          balanceAfter,
+          paymentMethod: "VIRTUAL_CARD",
+          module: "MEMBERSHIP",
+          description: `Membership Tier Upgrade: ${user.membership} to ${normTier}`,
+        },
+      });
+    }
+
+    return await tx.user.update({
+      where: { id: user.id },
+      data: {
+        membership: normTier,
+        renewalDate: newRenewalDate,
+      },
+    });
+  });
+
+  // Send confirmation email
+  await sendEmail({
+    to: user.email,
+    subject: `Congratulations! You've Upgraded to ${normTier} Tier`,
+    text: `Hello ${user.name},\n\nYour Champions Club membership has been upgraded to ${normTier}!\n\nNew Expiry Date: ${formatDateString(newRenewalDate)}\n\nEnjoy your increased court, shop, and cafe privileges.\n\nThe Champions Club Team`,
+  });
+
+  return {
+    success: true,
+    message: `Congratulations! Upgraded to ${normTier} membership successfully.`,
+    newTier: normTier,
+    newRenewalDate,
+    walletBalance: Number(updatedUser.amount),
+  };
+};

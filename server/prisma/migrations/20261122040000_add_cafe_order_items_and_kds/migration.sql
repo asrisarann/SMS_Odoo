@@ -1,0 +1,41 @@
+-- AlterTable CafeOrder
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "courtNumber" TEXT;
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "deliveryLocation" TEXT NOT NULL DEFAULT 'BAR_LOUNGE';
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'RECEIVED';
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "subtotal" DECIMAL(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "discount" DECIMAL(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "paymentMethod" "PaymentMethod" NOT NULL DEFAULT 'VIRTUAL_CARD';
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "paymentStatus" TEXT NOT NULL DEFAULT 'PAID';
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "fulfilledAt" TIMESTAMP(3);
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "CafeOrder" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable CafeMenuItem
+ALTER TABLE "CafeMenuItem" ADD COLUMN IF NOT EXISTS "image" TEXT;
+ALTER TABLE "CafeMenuItem" ADD COLUMN IF NOT EXISTS "calories" INTEGER;
+ALTER TABLE "CafeMenuItem" ADD COLUMN IF NOT EXISTS "prepTimeMin" INTEGER NOT NULL DEFAULT 5;
+ALTER TABLE "CafeMenuItem" ADD COLUMN IF NOT EXISTS "isVegan" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "CafeMenuItem" ADD COLUMN IF NOT EXISTS "isGlutenFree" BOOLEAN NOT NULL DEFAULT false;
+
+-- CreateTable CafeOrderItem
+CREATE TABLE IF NOT EXISTS "CafeOrderItem" (
+    "id" TEXT NOT NULL,
+    "orderId" TEXT NOT NULL,
+    "menuItemId" TEXT,
+    "name" TEXT NOT NULL,
+    "category" TEXT,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "unitPrice" DECIMAL(10,2) NOT NULL,
+    "totalPrice" DECIMAL(10,2) NOT NULL,
+
+    CONSTRAINT "CafeOrderItem_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "CafeOrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "CafeOrder"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "CafeOrderItem_menuItemId_fkey" FOREIGN KEY ("menuItemId") REFERENCES "CafeMenuItem"("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateIndex
+CREATE INDEX IF NOT EXISTS "CafeOrder_userID_status_idx" ON "CafeOrder"("userID", "status");
+CREATE INDEX IF NOT EXISTS "CafeOrder_status_dateTime_idx" ON "CafeOrder"("status", "dateTime");
+CREATE INDEX IF NOT EXISTS "CafeOrderItem_orderId_idx" ON "CafeOrderItem"("orderId");
+CREATE INDEX IF NOT EXISTS "CafeMenuItem_category_isAvailable_idx" ON "CafeMenuItem"("category", "isAvailable");
