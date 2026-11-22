@@ -390,15 +390,37 @@ export const api = {
       }),
   },
 
-  // 16. Court-Side Bar & Cafeteria
+  // 16. Court-Side Bar & Cafeteria (FastAPI Parity)
   cafe: {
     getMenu: (params = {}) =>
       request(`/api/cafe/menu${buildQueryString(params)}`),
+    getMenuItem: (id) =>
+      request(`/api/cafe/menu/${encodeURIComponent(id)}`),
+    createMenuItem: (data) =>
+      request('/api/cafe/menu', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    updateMenuItem: (id, data) =>
+      request(`/api/cafe/menu/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    deleteMenuItem: (id) =>
+      request(`/api/cafe/menu/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      }),
+    toggleAvailability: (id) =>
+      request(`/api/cafe/menu/${encodeURIComponent(id)}/toggle`, {
+        method: 'PATCH',
+      }),
     createOrder: (data) =>
       request('/api/cafe/orders', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    getOrder: (id) =>
+      request(`/api/cafe/orders/${encodeURIComponent(id)}`),
     getMyOrders: () => request('/api/cafe/orders/mine'),
     getOrders: (params = {}) =>
       request(`/api/cafe/orders${buildQueryString(params)}`),
@@ -407,15 +429,35 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ status, notes }),
       }),
-    toggleAvailability: (id) =>
-      request(`/api/cafe/menu/${encodeURIComponent(id)}/toggle`, {
-        method: 'PATCH',
-      }),
+    getReceipt: (id) =>
+      request(`/api/cafe/orders/${encodeURIComponent(id)}/receipt`),
+    downloadReceiptPdf: async (id, filename = null) => {
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`/api/cafe/orders/${encodeURIComponent(id)}/receipt/pdf`, { headers });
+      if (!res.ok) throw new Error('Failed to download PDF receipt.');
+      const blob = await res.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename || `receipt-${id.slice(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    },
+    getOrderSummary: (params = {}) =>
+      request(`/api/cafe/orders/summary${buildQueryString(params)}`),
     getStats: () => request('/api/cafe/stats'),
+    getCustomer: (id) =>
+      request(`/api/cafe/customers/${encodeURIComponent(id)}`),
   },
 
   // 17. System Health
   health: () => request('/api/health'),
 };
+
+api.bar = api.cafe;
 
 export default api;

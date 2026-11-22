@@ -114,6 +114,7 @@ app.use("/api/super-admin/staff/leaves", staffLeaveRoutes);
 // Court-Side Bar & Cafeteria Routes
 app.use("/api/cafe", cafeRoutes);
 app.use("/api/bar", cafeRoutes);
+app.use("/bar", cafeRoutes);
 
 // Front Desk module routes
 app.use("/api/front-desk", frontDeskRouter);

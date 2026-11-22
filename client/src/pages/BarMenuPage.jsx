@@ -68,11 +68,40 @@ export default function BarMenuPage() {
   const [placedOrder, setPlacedOrder] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [loadingReceipt, setLoadingReceipt] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [alert, setAlert] = useState(null);
 
   const showAlert = (type, message) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 6000);
+  };
+
+  const handleViewReceipt = async (orderId) => {
+    setLoadingReceipt(true);
+    try {
+      const res = await api.cafe.getReceipt(orderId);
+      if (res?.receipt) {
+        setSelectedReceipt(res.receipt);
+      }
+    } catch (err) {
+      showAlert('error', err.message || 'Failed to load order receipt.');
+    } finally {
+      setLoadingReceipt(false);
+    }
+  };
+
+  const handleDownloadPdf = async (orderId, orderNumber = '') => {
+    setDownloadingPdf(true);
+    try {
+      await api.cafe.downloadReceiptPdf(orderId, `receipt-${orderNumber || orderId.slice(0, 8)}.pdf`);
+      showAlert('success', 'Official PDF receipt downloaded successfully.');
+    } catch (err) {
+      showAlert('error', err.message || 'Failed to download receipt PDF.');
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   // Format INR Currency
@@ -902,6 +931,36 @@ export default function BarMenuPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => handleViewReceipt(placedOrder.id)}
+                disabled={loadingReceipt}
+                className="py-2.5 px-3 rounded-xl bg-gray-900 border border-gray-700 hover:border-gray-500 text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {loadingReceipt ? (
+                  <i className="fa-solid fa-circle-notch fa-spin text-[#C6EF2E]"></i>
+                ) : (
+                  <i className="fa-solid fa-receipt text-[#C6EF2E]"></i>
+                )}
+                <span>View Receipt</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDownloadPdf(placedOrder.id, placedOrder.orderNumber)}
+                disabled={downloadingPdf}
+                className="py-2.5 px-3 rounded-xl bg-gray-900 border border-gray-700 hover:border-gray-500 text-xs font-bold text-[#C6EF2E] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {downloadingPdf ? (
+                  <i className="fa-solid fa-circle-notch fa-spin"></i>
+                ) : (
+                  <i className="fa-solid fa-file-pdf"></i>
+                )}
+                <span>Download PDF</span>
+              </button>
+            </div>
+
             <button
               onClick={() => setPlacedOrder(null)}
               className="w-full py-3 rounded-xl bg-[#C6EF2E] hover:bg-[#b0d826] text-black font-extrabold text-sm transition-all cursor-pointer"
@@ -977,9 +1036,159 @@ export default function BarMenuPage() {
                         {formatINR(order.totalAmount)}
                       </span>
                     </div>
+
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-800/60">
+                      <button
+                        type="button"
+                        onClick={() => handleViewReceipt(order.id)}
+                        disabled={loadingReceipt}
+                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <i className="fa-solid fa-receipt text-[#C6EF2E]"></i>
+                        <span>Receipt</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPdf(order.id, order.orderNumber)}
+                        disabled={downloadingPdf}
+                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-[11px] font-bold text-[#C6EF2E] transition-all flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <i className="fa-solid fa-file-pdf"></i>
+                        <span>Download PDF</span>
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DETAILED RECEIPT MODAL */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md bg-[#141414] border border-gray-800 rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#C6EF2E]/10 border border-[#C6EF2E]/30 flex items-center justify-center text-[#C6EF2E] text-sm">
+                  <i className="fa-solid fa-receipt"></i>
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Official Cafe Receipt</h3>
+                  <p className="text-[10px] text-gray-400 font-mono">
+                    Order #{selectedReceipt.order_number || selectedReceipt.order_id?.slice(0, 8)}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedReceipt(null)}
+                className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
+              {/* Receipt Header Info */}
+              <div className="bg-gray-900/80 rounded-xl p-3 border border-gray-800/80 space-y-1.5 text-gray-300">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Date & Time:</span>
+                  <span className="font-medium text-white">
+                    {selectedReceipt.date_time ? new Date(selectedReceipt.date_time).toLocaleString() : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Customer:</span>
+                  <span className="font-medium text-white">{selectedReceipt.customer_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Destination:</span>
+                  <span className="font-bold text-[#C6EF2E]">{selectedReceipt.court_or_table}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Payment:</span>
+                  <span className="font-medium text-white uppercase font-mono text-[11px]">
+                    {selectedReceipt.payment_method} ({selectedReceipt.payment_status})
+                  </span>
+                </div>
+              </div>
+
+              {/* Items Breakdown */}
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1">
+                  Ordered Items
+                </div>
+                <div className="border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800/60 bg-gray-950/40">
+                  {selectedReceipt.items?.map((item, idx) => (
+                    <div key={idx} className="p-2.5 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-white text-xs">{item.name}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">
+                          {item.quantity} × {formatINR(item.unit_price)}
+                        </div>
+                      </div>
+                      <div className="font-mono font-bold text-white text-xs">
+                        {formatINR(item.total_price)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals Summary */}
+              <div className="bg-gray-900/60 rounded-xl p-3 border border-gray-800 space-y-1.5 text-gray-300">
+                <div className="flex justify-between text-gray-400">
+                  <span>Subtotal</span>
+                  <span className="font-mono text-white">{formatINR(selectedReceipt.subtotal)}</span>
+                </div>
+                {selectedReceipt.discount_applied > 0 && (
+                  <div className="flex justify-between text-[#C6EF2E]">
+                    <span>Membership Discount ({selectedReceipt.membership_tier})</span>
+                    <span className="font-mono">- {formatINR(selectedReceipt.discount_applied)}</span>
+                  </div>
+                )}
+                {selectedReceipt.tax_amount > 0 && (
+                  <div className="flex justify-between text-gray-400">
+                    <span>Tax</span>
+                    <span className="font-mono text-white">{formatINR(selectedReceipt.tax_amount)}</span>
+                  </div>
+                )}
+                <div className="border-t border-gray-800 pt-2 flex justify-between font-black text-sm text-white">
+                  <span>Grand Total</span>
+                  <span className="text-[#C6EF2E] font-mono">{formatINR(selectedReceipt.total_amount)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-4 border-t border-gray-800 flex items-center gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => handleDownloadPdf(selectedReceipt.order_id, selectedReceipt.order_number)}
+                disabled={downloadingPdf}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#C6EF2E] hover:bg-[#b0d826] text-black font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {downloadingPdf ? (
+                  <>
+                    <i className="fa-solid fa-circle-notch fa-spin"></i>
+                    <span>Generating PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-download"></i>
+                    <span>Download PDF Receipt</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedReceipt(null)}
+                className="py-2.5 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold transition-all cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
