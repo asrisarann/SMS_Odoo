@@ -116,6 +116,7 @@ model User {
   password       String?
   sportsBookings SportsBooking[]
   cafeOrders     CafeOrder[]
+  barOrders      BarOrder[]
   shopPurchases  SportShopPurchase[]
   walletTransactions WalletTransaction[]
   racketStringings RacketStringing[]
@@ -236,6 +237,50 @@ model CafeMenuItem {
   orderItems   CafeOrderItem[]
 
   @@index([category, isAvailable])
+}
+
+// ---------------- BAR ----------------
+
+model BarMenuItem {
+  id              String          @id @default(uuid())
+  name            String
+  description     String?
+  category        String
+  price           Decimal         @db.Decimal(10, 2)
+  isAvailable     Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  orderItems      BarOrderItem[]
+}
+
+model BarOrder {
+  id             String          @id @default(uuid())
+  userID         String
+  tableNumber    Int?
+  orderNumber    String          @unique
+  dateTime       DateTime        @default(now())
+  subtotal       Decimal         @db.Decimal(10, 2)
+  discountAmount Decimal         @db.Decimal(10, 2)
+  totalAmount    Decimal         @db.Decimal(10, 2)
+  user           User            @relation(fields: [userID], references: [id])
+  items          BarOrderItem[]
+
+  @@index([userID, dateTime])
+}
+
+model BarOrderItem {
+  id         String      @id @default(uuid())
+  orderID    String
+  menuItemID String
+  position   Int
+  name       String
+  quantity   Int
+  unitPrice  Decimal     @db.Decimal(10, 2)
+  lineTotal  Decimal     @db.Decimal(10, 2)
+  order      BarOrder    @relation(fields: [orderID], references: [id], onDelete: Cascade)
+  menuItem   BarMenuItem @relation(fields: [menuItemID], references: [id])
+
+  @@index([orderID, position])
 }
 
 // ---------------- SPORT SHOP PURCHASE ----------------

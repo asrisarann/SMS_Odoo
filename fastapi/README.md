@@ -28,3 +28,11 @@ Activation prepends the virtual environment's Python and scripts to the current 
 ```powershell
 deactivate
 ```
+
+## Bar API
+
+The independent Bar API is registered under `/bar` and uses the existing FastAPI database session and JWT authentication. ADMIN users have administrative access; SUBADMIN access is limited to the designation configured by `BAR_MODULE_DESIGNATION` (default: `bar`). Members can access their own Bar orders and receipts.
+
+Bar membership discounts use the shared Cafe discount configuration. Since no discount rates are configured by default, Bar orders retain the current zero-discount behavior until the team supplies rates.
+
+Bar menu and order data use separate `BarMenuItem`, `BarOrder`, and `BarOrderItem` tables. The proposed Prisma migration must be applied before Bar database endpoints can be used against Neon.
