@@ -1251,7 +1251,7 @@
           </div>
         </div>
         <div class="endpoint-body">
-          <p class="endpoint-description">Validates account credentials and dispatches a 6-digit login 2FA OTP to the user's email.</p>
+          <p class="endpoint-description">Validates account email and password, generates signed JWT token, sets the 7-day <code>httpOnly</code> cookie, and returns user profile.</p>
           
           <div class="details-grid">
             <div>
@@ -1284,8 +1284,17 @@
                   <button class="btn-action" onclick="copySnippet(this, 'resp-login')">Copy JSON</button>
                 </div>
                 <pre><code id="resp-login">{
-  "message": "Login OTP sent to your email. Please verify to complete login.",
-  "email": "alex.johnson@example.com"
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "c1a2b3c4-d5e6-7890-1234-56789abcdef0",
+    "name": "Alex Johnson",
+    "email": "alex.johnson@example.com",
+    "phone": "+91 98765 43210",
+    "membership": "GOLD",
+    "role": "MEMBER",
+    "module": null
+  }
 }</code></pre>
               </div>
             </div>

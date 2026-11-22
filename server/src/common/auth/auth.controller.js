@@ -192,21 +192,18 @@ export const verifyRegisterOtp = async (req, res) => {
 };
 
 /**
- * 4. Login User (Step 1):
- * Validates credentials and sends OTP to user email.
+ * 4. Login User:
+ * Validates email and password, generates JWT token, sets cookie, and returns user profile.
  */
 export const login = async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!phone || !password) {
+    if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
-
     }
 
-    const email = await prisma.user.findUnique({ where: { phone: phone } })
-
-    const normalizedEmail = email.email.trim().toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
     const account = await getUserWithRole(normalizedEmail);
 
     if (!account) {
@@ -222,16 +219,23 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const otp = generateOtp();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    const safeUser = {
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      phone: account.phone,
+      membership: account.membership,
+      role: account.role,
+      module: account.module,
+    };
 
-    pendingLoginOtps.set(normalizedEmail, { otp, otpExpiry });
-
-    await sendOtpEmail(normalizedEmail, otp, "Login");
+    const token = generateToken(safeUser);
+    res.cookie("token", token, COOKIE_OPTIONS);
 
     return res.status(200).json({
-      message: "Login OTP sent to your email. Please verify to complete login.",
-      email: normalizedEmail,
+      message: "Login successful",
+      token,
+      user: safeUser,
     });
   } catch (error) {
     console.error("Login error:", error);

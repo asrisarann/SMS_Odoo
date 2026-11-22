@@ -294,3 +294,8 @@
   4. Proxy & Client Routing: Mounted Express routing proxies (`/bar` and `/api/bar`), updated `client/vite.config.js` proxy forwarding, and extended `client/src/services/api.js` (`api.cafe` & `api.bar`).
 - Used: React 19, Node.js/Express (`server/src/modules/cafe/`), Vite proxy, Prisma ORM (v7), pure ISO PDF/1.4 generation, Tailwind CSS v4, FontAwesome 6.
 - Verification: Production Vite build (`npm --prefix client run build`) passed cleanly; all 12 backend test suites passed (100%) via `npm --prefix server test`; new integration test suite `test-fastapi-cafe-integration.js` verified all 7 steps (menu CRUD, order placement, receipt JSON, PDF %PDF header verification, summary analytics, customer lookup, and archiving).
+
+## 35. Direct Password Login Authentication (OTP Removed from Login)
+- Implemented: Removed OTP challenge from `POST /api/auth/login`. Login now validates email and password against bcrypt hash, generates a 7-day signed JWT token, sets the `httpOnly` authentication cookie, and immediately returns the authenticated user payload (`token`, `user: { id, name, email, phone, role, membership, module }`). Also sanitized email normalization to cleanly reject non-existent accounts with 400 without crashing.
+- Used: Node.js, Express, `bcrypt`, `jsonwebtoken`, Prisma ORM (v7).
+- Verification: Created and executed `test-login-direct.js` verifying missing credentials rejection (400), invalid password rejection (400), non-existent email rejection (400), direct password login success returning JWT token & user object (200), and authenticated access to protected `/api/auth/me` with the issued token; `npm run build` completed cleanly.
